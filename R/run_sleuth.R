@@ -21,7 +21,8 @@
 #' @param ... extra options that will be passed on the sleuth.
 #'   you can specify here whether \code{read_bootstrap_tpm} and
 #'   \code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
-#' 
+#'   you can also specify here 'delta' and 'impute_proportion' for
+#'   the transformation functions.
 #' @return a sleuth object that has been prepped and fitted using the
 #'   full and null models. It will also run the Wald test (if applicable)
 #'   and the LR test
@@ -44,10 +45,16 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   else
     extra_bootstrap_summary <- TRUE
 
+  if (is.null(extra_opts$impute_proportion))
+    impute_proportion <- 0.65
+  else impute_proportion <- extra_opts$impute_proportion
+
   # make the sleuth object using the PREP method,
   # which downloads the kallisto results and initializes the sleuth object
   # see ?sleuth::sleuth_prep for additional details
-  transform_function <- get_lr_function(type = lr_type, denom_name = denom_name)
+  transform_function <- get_lr_function(type = lr_type, denom_name = denom_name,
+                                        delta = extra_opts$delta,
+                                        impute_proportion = impute_proportion)
   sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
                             target_mapping = target_mapping,
                             norm_fun_counts = norm_identity,
