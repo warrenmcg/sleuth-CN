@@ -52,13 +52,18 @@ calculate_alr <- function(mat, denom_index = NULL) {
 #'   more than one, the geometric mean of the
 #'   denominator values within one sample is used
 #'   as the denominator.
-#'
+#' @param delta a number that is the imputed value. If \code{NULL},
+#'  delta = impute_proportion * (minimum value in sample)
+#' @param impute_proportion percentage of minimum value that
+#'  becomes the imputed value. Only used if delta is \code{NULL}
+#' 
 #' @return (D - n - z) x M matrix of ALR-transformed
 #'   values, with n equal to the number of denominator values
 #'   and z are the number of rows with essential zeros.
 #'
 #' @export
-alr_transformation <- function(mat, denom_name = NULL) {
+alr_transformation <- function(mat, denom_name = NULL, delta = NULL,
+                               impute_proportion = 0.65) {
   stopifnot(is.character(denom_name))
   flip <- FALSE
   if (ncol(mat) > nrow(mat)) {
@@ -66,7 +71,8 @@ alr_transformation <- function(mat, denom_name = NULL) {
     flip <- TRUE
   }
   mat <- remove_essential_zeros(mat)
-  imputed_mat <- impute_rounded_zeros(mat)
+  imputed_mat <- impute_rounded_zeros(mat, delta = delta,
+                                      impute_proportion)
   denom_index <- which(rownames(imputed_mat) == denom_name)
 #  denom_values <- imputed_mat[denom_index, ]
   alr_table <- calculate_alr(imputed_mat, denom_index)

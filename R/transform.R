@@ -7,10 +7,17 @@
 #' @param denom_name a character vector of target IDs that
 #'  will be the denominator. More than one is acceptable, and
 #'  you can also input a numeric vector of row numbers instead.
+#' @param delta a number that is the imputed value. If \code{NULL},
+#'  delta = impute_proportion * (minimum value in sample) 
+#' @param impute_proportion percentage of minimum value that
+#'  becomes the imputed value. Only used if delta is \code{NULL}
 #' 
 #' @return a transformation function ready to be used for the
 #'  'transform_fun' option in 'sleuth_prep'
-get_lr_function <- function(type = "alr", denom_name = NULL) {
+#' 
+#' @export
+get_lr_function <- function(type = "alr", denom_name = NULL,
+                            delta = NULL, impute_proportion = 0.65 ) {
   type <- match.arg(type, c("alr", "ALR", "clr", "CLR"))
   type <- tolower(type)
   
@@ -22,11 +29,22 @@ get_lr_function <- function(type = "alr", denom_name = NULL) {
   e <- new.env()
   if (type == "alr") {
     e$denom <- denom_name
+    e$delta <- delta
+    e$impute <- impute_proportion
     e$fun <- function(matrix, denom_name = eval(e$denom)) {
-      alr_transformation(matrix, denom_name = denom_name)
+      alr_transformation(matrix, denom_name = denom_name,
+                         delta = e$delta,
+                         impute_proportion = e$impute)
     }
   } else {
-    e$fun <- function(matrix) { clr_transformation(matrix) }
+    e$denom <- NULL
+    e$delta <- delta
+    e$impute <- impute_proportion
+    e$fun <- function(matrix) {
+      clr_transformation(matrix, 
+                         delta = e$delta, 
+                         impute_proportion = e$impute)
+    }
   }
   transform_fun <- function(matrix) { e$fun(matrix) }
   return(transform_fun)

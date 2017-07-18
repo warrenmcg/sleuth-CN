@@ -25,6 +25,10 @@ calculate_clr <- function(mat, base = "e") {
 #' @param mat N x M matrix of estimated abundances
 #' @param base what should the base of the logarithm be?
 #'   currently only supports base "e" and base 2.
+#' @param delta a number that is the imputed value. If \code{NULL},
+#'  delta = impute_proportion * (minimum value in sample)
+#' @param impute_proportion percentage of minimum value that
+#'  becomes the imputed value. Only used if delta is \code{NULL}
 #'
 #' @return N x M matrix of CLR-transformed values with 
 #' essential zero rows removed.
@@ -37,7 +41,9 @@ calculate_clr <- function(mat, base = "e") {
 #' x_1, x_2, ..., x_D => log(x_1 / g(X)), ..., log(x_D / g(X))
 #'
 #' @export
-clr_transformation <- function(mat, base = "e") {
+clr_transformation <- function(mat, base = "e",
+                               delta = NULL,
+                               impute_proportion = 0.65) {
   # this function expects samples to be columns
   # and target IDs to be rows;
   # some of sleuth's internals call the
@@ -49,7 +55,8 @@ clr_transformation <- function(mat, base = "e") {
     flip <- TRUE
   }
   mat <- remove_essential_zeros(mat)
-  imputed_mat <- impute_rounded_zeros(mat)
+  imputed_mat <- impute_rounded_zeros(mat, delta = delta,
+                                      impute_proportion = 0.65)
   clr_table <- calculate_clr(imputed_mat, base = base)
   if (flip) clr_table <- t(clr_table)
   clr_table
