@@ -1,0 +1,56 @@
+#' Impute Rounded Zeros
+#' 
+#' This uses the multiplicative strategy to impute zeros
+#' that are considered "rounded zeros", that is, values
+#' that are zero because the true value is positive but below
+#' the detection limit (i.e. the sequencing depth). See the
+#' references for more information.
+#'
+#' @param mat an N x M numeric matrix to be imputed.
+#' @param method the choice of how to impute the rounded zeros.
+#'   only "multiplicative" is supported at this time.
+#' @param delta the value to impute; if NULL,
+#'   delta = impute_proportion x (the minimum value in a sample)
+#' @param impute_proportion the proportion of the minimum value
+#'   that should be the delta value (default = 65\%).
+#'
+#' @return an N x M matrix with all zero values imputed.
+#'
+impute_rounded_zeros <- function(mat, method = "multiplicative",
+                                 delta = NULL, impute_proportion = 0.65) {
+  method <- match.arg(method, c("multiplicative", "EM", "bayesian"))
+  if (method == "multiplicative") {
+    new_mat <- apply(mat, 2, function(col_values) {
+      if (is.null(delta)) {
+        detection_limit <- min(col_values[col_values!=0])
+        delta <- detection_limit * impute_proportion
+      }
+#      delta <- 0.5
+      c_i <- sum(col_values)
+      num_zeros <- length(which(col_values == 0))
+      new_column <- apply(as.matrix(col_values), 1, function(x) {
+        if(x == 0) value <- delta else
+          value <- x * (1 - (delta * num_zeros) / c_i)
+        value
+      })
+    })
+    new_mat
+  } else {
+    stop("Methods 'EM' and 'bayesian' are not supported yet.")
+  }
+}
+
+#' Remove Essential Zeros
+#' 
+#' This function excludes "essential zeros", that is,
+#' target IDs that are assumed to be silent and
+#' non-expressed.
+#' 
+#' @param mat an N x M numeric matrix.
+#' 
+#' @return an (N-z) x M numeric matrix, with z
+#'   equal to the number of rows with all zero values.
+remove_essential_zeros <- function(mat) {
+  allZeroRows <- which(rowSums(mat) == 0)
+  mat[-allZeroRows, ]
+}
