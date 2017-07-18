@@ -4,7 +4,8 @@
 \alias{alr_transformation}
 \title{Calculate ALR}
 \usage{
-alr_transformation(mat, denom_name = NULL)
+alr_transformation(mat, denom_name = NULL, delta = NULL,
+  impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
@@ -15,6 +16,12 @@ an integer vector of row numbers. If there is
 more than one, the geometric mean of the
 denominator values within one sample is used
 as the denominator.}
+
+\item{delta}{a number that is the imputed value. If \code{NULL},
+delta = impute_proportion * (minimum value in sample)}
+
+\item{impute_proportion}{percentage of minimum value that
+becomes the imputed value. Only used if delta is \code{NULL}}
 }
 \value{
 (D - n - z) x M matrix of ALR-transformed

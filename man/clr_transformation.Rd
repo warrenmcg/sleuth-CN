@@ -4,13 +4,20 @@
 \alias{clr_transformation}
 \title{Centered Logratio Transformation}
 \usage{
-clr_transformation(mat, base = "e")
+clr_transformation(mat, base = "e", delta = NULL,
+  impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{N x M matrix of estimated abundances}
 
 \item{base}{what should the base of the logarithm be?
 currently only supports base "e" and base 2.}
+
+\item{delta}{a number that is the imputed value. If \code{NULL},
+delta = impute_proportion * (minimum value in sample)}
+
+\item{impute_proportion}{percentage of minimum value that
+becomes the imputed value. Only used if delta is \code{NULL}}
 }
 \value{
 N x M matrix of CLR-transformed values with 
