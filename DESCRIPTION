@@ -1,0 +1,12 @@
+Package: sleuth.comp
+Title: Compositional Approach to Sleuth Data Analysis
+Version: 0.0.0.9000
+Authors@R: person("Warren", "McGee", email = "warren.a.mcg@gmail.com", role = c("aut", "cre"))
+Description: All RNA-Seq datasets are inherently compositional, which requires a
+    compositional data analysis approach. Building off ideas from 'ALDEx2' and
+    'compositions' R packages, this applies a logratio transformation to the data
+    that is typically used as input into sleuth.
+Depends: R (>= 3.4.1)
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
