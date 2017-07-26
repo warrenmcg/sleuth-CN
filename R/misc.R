@@ -1,3 +1,11 @@
+#' Norm Identity
+#'
+#' Function to return size factors of just 1
+#' for sleuth normalization (i.e. lack of
+#' normalization). Normalization is not
+#' necessary for logratio transformations.
+#'
+#' @export
 norm_identity <- function(mat) {
   rep(1, ncol(mat))
 }
