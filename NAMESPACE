@@ -2,4 +2,6 @@
 
 export(alr_transformation)
 export(clr_transformation)
+export(get_lr_function)
 export(make_lr_sleuth_object)
+export(norm_identity)
