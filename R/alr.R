@@ -30,7 +30,7 @@ calculate_alr <- function(mat, denom_index = NULL) {
   } else denom_row <- mat[denom_index, ]
   alr_table <- sweep(mat, 2, denom_row, "/")
   alr_table <- log(alr_table)
-  alr_table <- alr_table[-denom_index, ]
+#  alr_table <- alr_table[-denom_index, ]
   alr_table
 }
 
@@ -64,16 +64,19 @@ calculate_alr <- function(mat, denom_index = NULL) {
 #' @export
 alr_transformation <- function(mat, denom_name = NULL, delta = NULL,
                                impute_proportion = 0.65) {
-  stopifnot(is.character(denom_name))
+#  stopifnot(is.character(denom_name))
   flip <- FALSE
   if (ncol(mat) > nrow(mat)) {
     mat <- t(mat)
     flip <- TRUE
   }
-  mat <- remove_essential_zeros(mat)
+#  mat <- remove_essential_zeros(mat)
   imputed_mat <- impute_rounded_zeros(mat, delta = delta,
-                                      impute_proportion)
-  denom_index <- which(rownames(imputed_mat) == denom_name)
+                                      impute_proportion = impute_proportion)
+  if (is.character(denom_name))
+    denom_index <- which(rownames(imputed_mat) == denom_name)
+  else
+    denom_index <- denom_name
 #  denom_values <- imputed_mat[denom_index, ]
   alr_table <- calculate_alr(imputed_mat, denom_index)
   if (flip) alr_table <- t(alr_table)
