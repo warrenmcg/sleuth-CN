@@ -64,6 +64,9 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                             extra_bootstrap_summary = extra_bootstrap_summary,
                             transformation_function = transform_function,
                             num_cores = num_cores, ...)
+
+  sleuth.obj <- clean_denom_names(sleuth.obj)
+
   # the default of sleuth_fit is to fit the 'full' model,
   # found in the 'full_model' variable above
   # see ?sleuth::sleuth_fit for more details
