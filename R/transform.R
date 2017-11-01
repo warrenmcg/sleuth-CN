@@ -37,7 +37,7 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
                          impute_proportion = e$impute)
     }
   } else {
-    e$denom <- NULL
+    e$denom <- "all"
     e$delta <- delta
     e$impute <- impute_proportion
     e$fun <- function(matrix) {
