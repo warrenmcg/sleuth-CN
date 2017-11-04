@@ -6,7 +6,8 @@
 #' the detection limit (i.e. the sequencing depth). See the
 #' references for more information.
 #'
-#' @param mat an N x M numeric matrix to be imputed.
+#' @param mat an N x M numeric matrix to be imputed, with N
+#'   targets and M samples.
 #' @param method the choice of how to impute the rounded zeros.
 #'   only "multiplicative" is supported at this time.
 #' @param delta the value to impute; if NULL,
