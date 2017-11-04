@@ -1,4 +1,4 @@
-Package: sleuth.comp
+Package: sleuthALR
 Title: Compositional Approach to Sleuth Data Analysis
 Version: 0.0.0.9000
 Authors@R: person("Warren", "McGee", email = "warren.a.mcg@gmail.com", role = c("aut", "cre"))
