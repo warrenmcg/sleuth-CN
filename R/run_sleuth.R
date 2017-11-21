@@ -37,6 +37,8 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm", ...)
 {
   stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
+  best_denom_var <- ifelse(which_var == 'obs_tpm', 'tpm', 'est_counts')
+
   extra_opts <- list(...)
   if ("read_bootstrap_tpm" %in% names(extra_opts))
     read_bootstrap_tpm <- extra_opts$read_bootstrap_tpm
@@ -51,6 +53,14 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   if (is.null(extra_opts$impute_proportion))
     impute_proportion <- 0.65
   else impute_proportion <- extra_opts$impute_proportion
+
+  if (!is.null(denom_name) && denom_name == 'best') {
+    denom_name <- choose_denom(sample_info = sample_to_covariates,
+                               target_mapping = target_mapping,
+                               aggregation_column = aggregate_column,
+                               num_cores = num_cores,
+                               which_var = best_denom_var)
+  }
 
   # make the sleuth object using the PREP method,
   # which downloads the kallisto results and initializes the sleuth object
