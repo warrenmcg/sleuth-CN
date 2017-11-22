@@ -1,4 +1,17 @@
-
+#' Calculate CLR
+#'
+#' This function calculates the centered logratio
+#' transformation (subtracting geometric mean of all
+#' features within each sample).
+#'
+#' @param mat an D x M matrix of D target IDs and
+#'   M samples
+#' @param base what should the base of the logarithm be?
+#'   currently only supports base "e" and base 2.
+#'
+#' @return D x M matrix of CLR-transformed values,
+#'   centered on the geometric mean of all features
+#'   within each sample
 calculate_clr <- function(mat, base = "e") {
   base <- as.character(base)
   base <- match.arg(base, c("e", "2"))

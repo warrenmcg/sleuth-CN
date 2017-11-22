@@ -8,11 +8,12 @@ get_lr_function(type = "alr", denom_name = NULL, delta = NULL,
   impute_proportion = 0.65)
 }
 \arguments{
-\item{type}{either "alr" or "clr" (also accepts "ALR" / "CLR")}
+\item{type}{either "alr", "clr", or "iqlr" (also accepts "ALR" / "CLR" / "IQLR")}
 
 \item{denom_name}{a character vector of target IDs that
 will be the denominator. More than one is acceptable, and
-you can also input a numeric vector of row numbers instead.}
+you can also input a numeric vector of row numbers instead.
+Note that this will be ignored if 'clr' or 'iqlr' is used.}
 
 \item{delta}{a number that is the imputed value. If \code{NULL},
 delta = impute_proportion * (minimum value in sample)}

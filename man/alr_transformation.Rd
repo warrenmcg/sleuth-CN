@@ -4,8 +4,8 @@
 \alias{alr_transformation}
 \title{Calculate ALR}
 \usage{
-alr_transformation(mat, denom_name = NULL, delta = NULL,
-  impute_proportion = 0.65)
+alr_transformation(mat, denom_name, base = "e", remove_zeros = FALSE,
+  delta = NULL, impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
@@ -16,6 +16,15 @@ an integer vector of row numbers. If there is
 more than one, the geometric mean of the
 denominator values within one sample is used
 as the denominator.}
+
+\item{base}{what should the base of the logarithm be?
+currently only supports base "e" and base 2.}
+
+\item{remove_zeros}{boolean to see if this function
+should remove essential zeros (features with zeros in
+all samples). The default is \code{FALSE} to be
+compatible with sleuth, as its default filter removes
+essential zeros.}
 
 \item{delta}{a number that is the imputed value. If \code{NULL},
 delta = impute_proportion * (minimum value in sample)}
@@ -33,8 +42,8 @@ This function calculates the additive logratio
 transformation. This function uses calculate_alr
 internally after processing the data to handle
 zeros. Essential zeros (i.e. target IDs with 
-zeros in all samples) are excluded, and
-round zeros (i.e. target IDs with at least one
-zero value) are imputed using the mulitplicative
-method.
+zeros in all samples) can be optionally excluded, and
+all remaining zeros, including rounded zeros
+(i.e. target IDs with at least one zero value) are
+always imputed using the hidden impute_zeros function.
 }

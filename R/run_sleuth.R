@@ -19,7 +19,10 @@
 #' @param denom_name, target ID names or index numbers of denominators;
 #'   required for the ALR transformation. If 'clr' or 'iqlr' is used, this overrides
 #'   'lr_type' and the CLR / IQLR transformation will be used. If lr_type is 'clr' or 'iqlr',
-#'   this argument will be ignored.
+#'   this argument will be ignored. If 'best' is used, then the internal function
+#'   choose_best_denoms will be used to identify the feature(s) with the most consistent
+#'   abundance across all samples in the experiment. See \link{choose_denom} for extra
+#'   options.
 #' @param which_var, must be "obs_tpm" or "obs_counts", to indicate
 #'   whether sleuth should model TPMs or estimated counts, respectively
 #' @param ... extra options that will be passed on the sleuth.

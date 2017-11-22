@@ -13,8 +13,7 @@
 #'   denominator values within one sample is used
 #'   as the denominator.
 #' 
-#' @return (D - n) x M matrix of ALR-transformed
-#'   values, with n equal to the number of denominator values 
+#' @return D x M matrix of ALR-transformed values
 calculate_alr <- function(mat, base = "e", denom_index = NULL) {
   if(is.character(denom_index) & !(all(denom_index %in% rownames(mat))))
     stop(denom_index, " is not one of the row names of your matrix.")

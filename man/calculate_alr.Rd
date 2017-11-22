@@ -4,11 +4,14 @@
 \alias{calculate_alr}
 \title{Calculate ALR}
 \usage{
-calculate_alr(mat, denom_index = NULL)
+calculate_alr(mat, base = "e", denom_index = NULL)
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
 M samples}
+
+\item{base}{what should the base of the logarithm be?
+currently only supports base "e" and base 2.}
 
 \item{denom_index}{a character vector of target IDs or
 an integer vector of row numbers. If there is
@@ -17,8 +20,7 @@ denominator values within one sample is used
 as the denominator.}
 }
 \value{
-(D - n) x M matrix of ALR-transformed
-  values, with n equal to the number of denominator values
+D x M matrix of ALR-transformed values
 }
 \description{
 This function calculates the additive logratio

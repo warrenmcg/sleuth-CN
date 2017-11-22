@@ -8,7 +8,7 @@ make_lr_sleuth_object(sample_to_covariates,
   full_model = stats::formula("~condition"), target_mapping, beta,
   null_model = stats::formula("~1"), aggregate_column = NULL,
   num_cores = parallel::detectCores() - 2, lr_type = "alr",
-  denom_name = NULL, ...)
+  denom_name = NULL, which_var = "obs_tpm", ...)
 }
 \arguments{
 \item{sample_to_covariates, }{the sample_to_covariates matrix for sleuth}
@@ -32,7 +32,15 @@ default is the intercept only model (~1).}
 indicating additive logratio or centered logratio transformation}
 
 \item{denom_name, }{target ID names or index numbers of denominators;
-required for the ALR transformation.}
+required for the ALR transformation. If 'clr' or 'iqlr' is used, this overrides
+'lr_type' and the CLR / IQLR transformation will be used. If lr_type is 'clr' or 'iqlr',
+this argument will be ignored. If 'best' is used, then the internal function
+choose_best_denoms will be used to identify the feature(s) with the most consistent
+abundance across all samples in the experiment. See \link{choose_denom} for extra
+options.}
+
+\item{which_var, }{must be "obs_tpm" or "obs_counts", to indicate
+whether sleuth should model TPMs or estimated counts, respectively}
 
 \item{...}{extra options that will be passed on the sleuth.
 you can specify here whether \code{read_bootstrap_tpm} and

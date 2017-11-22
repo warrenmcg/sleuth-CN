@@ -4,7 +4,7 @@
 \alias{clr_transformation}
 \title{Centered Logratio Transformation}
 \usage{
-clr_transformation(mat, base = "e", delta = NULL,
+clr_transformation(mat, base = "e", remove_zeros = FALSE, delta = NULL,
   impute_proportion = 0.65)
 }
 \arguments{
