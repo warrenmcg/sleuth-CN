@@ -17,23 +17,26 @@
 #'
 #' @return an N x M matrix with all zero values imputed.
 #'
-impute_rounded_zeros <- function(mat, method = "multiplicative",
-                                 delta = NULL, impute_proportion = 0.65) {
+impute_zeros <- function(mat, method = "multiplicative",
+                         delta = NULL, impute_proportion = 0.65) {
   method <- match.arg(method, c("multiplicative", "EM", "bayesian"))
+  stopifnot(impute_proportion > 0 & impute_proportion < 1)
+  stopifnot(is.null(delta) | delta > 0)
   if (method == "multiplicative") {
     new_mat <- apply(mat, 2, function(col_values) {
       if (is.null(delta)) {
+        col_values <- ifelse(col_values < .Machine$double.eps / impute_proportion,
+                             0, col_values)
         detection_limit <- min(col_values[col_values!=0])
         delta <- detection_limit * impute_proportion
+      } else {
+        col_values <- ifelse(col_values < delta, 0, col_values)
       }
-#      delta <- 0.5
       c_i <- sum(col_values)
       num_zeros <- length(which(col_values == 0))
-      new_column <- apply(as.matrix(col_values), 1, function(x) {
-        if(x == 0) value <- delta else
-          value <- x * (1 - (delta * num_zeros) / c_i)
-        value
-      })
+      ifelse(col_values == 0,
+             delta,
+             col_values * (1 - (delta * num_zeros) / c_i))
     })
     new_mat
   } else {

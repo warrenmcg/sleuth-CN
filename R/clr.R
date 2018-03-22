@@ -59,8 +59,8 @@ clr_transformation <- function(mat, base = "e",
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_rounded_zeros(mat, delta = delta,
-                                      impute_proportion = 0.65)
+  imputed_mat <- impute_zeros(mat, delta = delta,
+                              impute_proportion = 0.65)
   clr_table <- calculate_clr(imputed_mat, base = base)
   if (flip) clr_table <- t(clr_table)
   clr_table

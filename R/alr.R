@@ -88,8 +88,8 @@ alr_transformation <- function(mat, denom_name,
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_rounded_zeros(mat, delta = delta,
-                                      impute_proportion = impute_proportion)
+  imputed_mat <- impute_zeros(mat, delta = delta,
+                              impute_proportion = impute_proportion)
   denom_index <- ifelse(is.character(denom_name),
     denom_index <- which(rownames(imputed_mat) %in% denom_name),
     denom_index <- denom_name
