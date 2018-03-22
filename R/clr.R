@@ -12,7 +12,7 @@ calculate_clr <- function(mat, base = "e") {
     x / geomean(x)
   })
   if (base == "e") clr_table <- log(clr_table) else
-    clr_table <- log(clr_table, base)
+    clr_table <- log(clr_table, as.integer(base))
   clr_table
 }
 
@@ -54,7 +54,7 @@ clr_transformation <- function(mat, base = "e",
     mat <- t(mat)
     flip <- TRUE
   }
-  mat <- remove_essential_zeros(mat)
+#  mat <- remove_essential_zeros(mat)
   imputed_mat <- impute_rounded_zeros(mat, delta = delta,
                                       impute_proportion = 0.65)
   clr_table <- calculate_clr(imputed_mat, base = base)
