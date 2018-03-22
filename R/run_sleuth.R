@@ -18,6 +18,8 @@
 #'   indicating additive logratio or centered logratio transformation
 #' @param denom_name, target ID names or index numbers of denominators;
 #'   required for the ALR transformation.
+#' @param which_var, must be "obs_tpm" or "obs_counts", to indicate
+#'   whether sleuth should model TPMs or estimated counts, respectively
 #' @param ... extra options that will be passed on the sleuth.
 #'   you can specify here whether \code{read_bootstrap_tpm} and
 #'   \code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
@@ -32,8 +34,9 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                   target_mapping, beta, null_model = stats::formula('~1'),
                                   aggregate_column = NULL,
                                   num_cores = parallel::detectCores() - 2,
-                                  lr_type = "alr", denom_name = NULL, ...)
+                                  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm", ...)
 {
+  stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
   extra_opts <- list(...)
   if ("read_bootstrap_tpm" %in% names(extra_opts))
     read_bootstrap_tpm <- extra_opts$read_bootstrap_tpm
@@ -70,7 +73,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   # the default of sleuth_fit is to fit the 'full' model,
   # found in the 'full_model' variable above
   # see ?sleuth::sleuth_fit for more details
-  sleuth.obj <- sleuth::sleuth_fit(sleuth.obj)
+  sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, which_var = which_var)
   # use Wald test to see significance of the chosen 'beta' on expression
   if (!is.null(beta))
     sleuth.obj <- sleuth::sleuth_wt(sleuth.obj, beta)
@@ -78,7 +81,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
           "performing likelihood ratio test")
   # use likelihood ratio test to look at the null_model versus the full_model
   sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, formula = null_model,
-                                   fit_name = "reduced")
+                                   fit_name = "reduced", which_var = which_var)
   sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
   sleuth.obj
 }
