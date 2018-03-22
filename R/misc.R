@@ -86,15 +86,22 @@ clean_denom_names <- function(obj) {
 #'   You must provide a target_mapping table with a column whose name is this argument.
 #' @param num_cores the number of cores that parallel should use to process samples
 #' @param which_var must be one of "est_counts", "tpm", or "scaled_reads_per_base" (for gene-level counts).
+#' @param min_value the minimum threshold for the mean of 'which_var' for the candidate denominator.
 #' @param method the metric used to select the denominator. Currently only "cov" is implemented.
+#' @param filter_length boolean to filter possible denominators by length. This requires that 'length'
+#'   is a column in the target_mapping. If \code{TRUE}, then all features with a length less
+#'   than 300 bases is excluded from consideration. This is recommended when modeling TPMs,
+#'   and is thus \code{TRUE} by default since TPMs are modeled by default.
 #'
 #' @return a character vector with one or more denominators for use. If multiple
 #'   features have ties for the metric of choice, currently all of them are returned so
 #'   that their geometric mean can be used as the denominator.
 #' @export
 choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
-                         aggregation_column = NULL, num_cores = 1,
-                         which_var = "est_counts", method = "cov") {
+                         aggregation_column = NULL, num_cores = 1, num_denoms = 1,
+                         which_var = "est_counts", min_value = 5, method = "cov",
+                         filter_length = TRUE) {
+  stopifnot(which_var %in% c("est_counts", "scaled_reads_per_base", "tpm"))
   if (is.null(obj)) {
     if (is.null(sample_info)) {
       stop("You must provide either a sleuth object to 'obj', ",
@@ -121,19 +128,50 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     }
   }
 
-  stopifnot(which_var %in% c("est_counts", "scaled_reads_per_base", "tpm"))
   which_var <- sleuth:::check_quant_mode(obj, which_var)
+
+  if (filter_length) {
+    message("filtering by length")
+    if(!("length" %in% names(target_mapping))) {
+      stop("The 'target_mapping' table is missing a 'length' column. This is required to filter features by length.")
+    }
+    if(!is.null(aggregation_column)) {
+      transcript_lengths <- data.table::as.data.table(dplyr::select_(target_mapping, aggregation_column, "length"))
+      length_bool <- transcript_lengths[, list(bool = all(length >= 300)), by = list(eval(parse(text = aggregation_column)))]
+      length_bool_ids <- length_bool[[aggregation_column]][length_bool$bool]
+    } else {
+      transcript_lengths <- dplyr::select(target_mapping, target_id, length)
+      length_bool <- transcript_lengths$length >= 300
+      length_bool_ids <- transcript_lengths$target_id[length_bool]
+    }
+  }
 
   if (method == "cov") {
     message("Calculating the coefficient of variation of all targets")
     if (is.null(aggregation_column)) {
       mat <- sleuth:::spread_abundance_by(obj$obs_raw, which_var)
+      # only have a matrix containing filtered values, to remove low expressing transcripts
+      # which often have low coefficients of variation
+      # gene-level, using the normalized matrix, is already filtered
+      allNonZero <- apply(mat, 1, function(x) all(x>0))
+      mat <- mat[obj$filter_bool & allNonZero, ]
     } else {
-      mat <- sleuth:::spread_abundance_by(obj$obs_norm, which_var)
+      mat <- sleuth:::spread_abundance_by(obj$obs_norm_filt, which_var)
+      allNonZero <- apply(mat, 1, function(x) all(x>0))
+      mat <- mat[allNonZero, ]
     }
+    if (filter_length) mat <- mat[row.names(mat) %in% length_bool_ids, ]
     cov <- apply(mat, 1, function(x) sd(x, na.rm = T) / mean(x, na.rm = T))
-    min_cov <- min(cov, na.rm = T)
-    min_index <- which(cov == min_cov)
+    mean_vals <- apply(mat, 1, mean)
+    if (num_denoms == 1) {
+      min_cov <- min(cov[which(mean_vals >= min_value & cov > 0)], na.rm = T)
+      min_index <- which(cov == min_cov)
+    } else {
+      filt_cov <- cov[which(mean_vals >= min_value & cov > 0)]
+      ordered_cov <- filt_cov[order(filt_cov)]
+      min_cov <- ordered_cov[1:num_denoms]
+      min_index <- which(cov %in% min_cov)
+    }
     denom_name <- names(cov)[min_index]
   } else {
     stop("Currently, 'cov' is the only implemented method. ",
