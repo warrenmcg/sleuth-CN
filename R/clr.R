@@ -42,7 +42,7 @@ calculate_clr <- function(mat, base = "e") {
 #'
 #' @export
 clr_transformation <- function(mat, base = "e",
-                               delta = NULL,
+                               remove_zeros = FALSE, delta = NULL,
                                impute_proportion = 0.65) {
   # this function expects samples to be columns
   # and target IDs to be rows;
@@ -54,7 +54,11 @@ clr_transformation <- function(mat, base = "e",
     mat <- t(mat)
     flip <- TRUE
   }
-#  mat <- remove_essential_zeros(mat)
+
+  if (remove_zeros) {
+    mat <- remove_essential_zeros(mat)
+  }
+
   imputed_mat <- impute_rounded_zeros(mat, delta = delta,
                                       impute_proportion = 0.65)
   clr_table <- calculate_clr(imputed_mat, base = base)
