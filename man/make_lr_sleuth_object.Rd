@@ -6,9 +6,9 @@
 \usage{
 make_lr_sleuth_object(sample_to_covariates,
   full_model = stats::formula("~condition"), target_mapping, beta,
-  null_model = stats::formula("~1"), aggregate_column = NULL,
-  num_cores = parallel::detectCores() - 2, lr_type = "alr",
-  denom_name = NULL, which_var = "obs_tpm", ...)
+  null_model = stats::formula("~1"), run_models = TRUE,
+  aggregate_column = NULL, num_cores = parallel::detectCores() - 2,
+  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm", ...)
 }
 \arguments{
 \item{sample_to_covariates, }{the sample_to_covariates matrix for sleuth}
@@ -22,6 +22,9 @@ the Wald test will be skipped.}
 
 \item{null_model, }{the null model to be the baseline for the LR test.
 default is the intercept only model (~1).}
+
+\item{run_models}{boolean to see if the modeling step should be done.
+If \code{FALSE}, only sleuth_prep is done. Default is \code{TRUE}.}
 
 \item{aggregate_column, }{character indicating the column in
 \code{target_mapping} to be used for "gene-level" sleuth analysis.}

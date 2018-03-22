@@ -11,6 +11,8 @@
 #'   the Wald test will be skipped.
 #' @param null_model, the null model to be the baseline for the LR test.
 #'   default is the intercept only model (~1).
+#' @param run_models boolean to see if the modeling step should be done.
+#'   If \code{FALSE}, only sleuth_prep is done. Default is \code{TRUE}.
 #' @param aggregate_column, character indicating the column in
 #'   \code{target_mapping} to be used for "gene-level" sleuth analysis.
 #' @param num_cores, the number of cores to be used for sleuth analysis
@@ -37,7 +39,7 @@
 #' @export
 make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::formula('~condition'),
                                   target_mapping, beta, null_model = stats::formula('~1'),
-                                  aggregate_column = NULL,
+                                  run_models = TRUE, aggregate_column = NULL,
                                   num_cores = parallel::detectCores() - 2,
                                   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm", ...)
 {
@@ -66,13 +68,15 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                num_cores = num_cores,
                                which_var = best_denom_var)
   } else if (!is.null(denom_name) && tolower(denom_name) == 'clr') {
-    if(tolower(lr_type) != 'clr')
-      warning("'denom_name' is 'clr', but 'lr_type' is not 'clr'. The lr_type will be overriden and is now 'clr'")
-    lr_type <- 'clr'
+    if(tolower(lr_type) != 'clr') {
+      message("'denom_name' is 'clr', but 'lr_type' is not 'clr'. The lr_type will be overriden and is now 'clr'")
+      lr_type <- 'clr'
+    }
   } else if (!is.null(denom_name) && tolower(denom_name) == 'iqlr') {
-    if(tolower(lr_type) != 'iqlr')
-      warning("'denom_name' is 'iqlr', but 'lr_type' is not 'iqlr'. The lr_type will be overriden and is now 'iqlr'")
-    lr_type <- 'iqlr'
+    if(tolower(lr_type) != 'iqlr') {
+      message("'denom_name' is 'iqlr', but 'lr_type' is not 'iqlr'. The lr_type will be overriden and is now 'iqlr'")
+      lr_type <- 'iqlr'
+    }
   }
 
   # make the sleuth object using the PREP method,
@@ -96,15 +100,17 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   # the default of sleuth_fit is to fit the 'full' model,
   # found in the 'full_model' variable above
   # see ?sleuth::sleuth_fit for more details
-  sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, which_var = which_var)
-  # use Wald test to see significance of the chosen 'beta' on expression
-  if (!is.null(beta))
-    sleuth.obj <- sleuth::sleuth_wt(sleuth.obj, beta)
-  message(">> ", Sys.time(), " - fitting null model and ",
-          "performing likelihood ratio test")
-  # use likelihood ratio test to look at the null_model versus the full_model
-  sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, formula = null_model,
-                                   fit_name = "reduced", which_var = which_var)
-  sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
+  if (run_models) {
+    sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, which_var = which_var)
+    # use Wald test to see significance of the chosen 'beta' on expression
+    if (!is.null(beta))
+      sleuth.obj <- sleuth::sleuth_wt(sleuth.obj, beta)
+    message(">> ", Sys.time(), " - fitting null model and ",
+            "performing likelihood ratio test")
+    # use likelihood ratio test to look at the null_model versus the full_model
+    sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, formula = null_model,
+                                     fit_name = "reduced", which_var = which_var)
+    sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
+  }
   sleuth.obj
 }
