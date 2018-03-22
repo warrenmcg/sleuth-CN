@@ -40,7 +40,7 @@ get_denom_names <- function(obj) {
 clean_denom_names <- function(obj) {
   stopifnot(is(obj, 'sleuth'))
   denom_names <- get_denom_names(obj)
-  if (is.null(denom_names) | denom_names == "all") {
+  if (is.null(denom_names) | denom_names == "all" | denom_names == "iqlr" | length(denom_names) > 1) {
     return(obj)
   } else {
     if(!is.null(obj$bs_summary$obs_counts)) {
