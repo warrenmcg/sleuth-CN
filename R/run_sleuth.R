@@ -17,7 +17,9 @@
 #' @param lr_type, either "alr" or "clr" ("ALR" / "CLR" also accepted),
 #'   indicating additive logratio or centered logratio transformation
 #' @param denom_name, target ID names or index numbers of denominators;
-#'   required for the ALR transformation.
+#'   required for the ALR transformation. If 'clr' is used, this overrides
+#'   'lr_type' and CLR transformation will be used. If lr_type is 'clr',
+#'   this argument will be ignored.
 #' @param which_var, must be "obs_tpm" or "obs_counts", to indicate
 #'   whether sleuth should model TPMs or estimated counts, respectively
 #' @param ... extra options that will be passed on the sleuth.
@@ -60,6 +62,10 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                aggregation_column = aggregate_column,
                                num_cores = num_cores,
                                which_var = best_denom_var)
+  } else if (!is.null(denom_name) && tolower(denom_name) == 'clr') {
+    if(tolower(lr_type) != 'clr')
+      warning("'denom_name' is 'clr', but 'lr_type' is not 'clr'. The lr_type will be overriden and is now 'clr'")
+    lr_type <- 'clr'
   }
 
   # make the sleuth object using the PREP method,
@@ -95,4 +101,3 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
   sleuth.obj
 }
-
