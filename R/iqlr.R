@@ -1,6 +1,6 @@
 find_iqlr_denoms <- function(mat, base = "e") {
   clr_vals <- calculate_clr(mat, base)
-  clr_var <- apply(clr_vals, 1, var)
+  clr_var <- matrixStats::rowVars(clr_vals)
   qts <- quantile(clr_var, na.rm = T)
   indices <- which(clr_var > qts[2] & clr_var < qts[4])
   indices

@@ -6,8 +6,8 @@ Description: All RNA-Seq datasets are inherently compositional, which requires a
     compositional data analysis approach. Building off ideas from 'ALDEx2' and
     'compositions' R packages, this applies a logratio transformation to the data
     that is typically used as input into sleuth.
-Depends: R (>= 3.4.1)
-imports: stats, sleuth (>= 0.28.1)
+Depends: R (>= 3.2.1)
+imports: stats, sleuth (>= 0.28.1), matrixStats
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true

@@ -11,7 +11,7 @@ norm_identity <- function(mat) {
 }
 
 geomean <- function(x, na.rm=TRUE){
-  exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
+  exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x[x>0]))
 }
 
 #' Get Denom Name(s)
@@ -153,16 +153,16 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
       # only have a matrix containing filtered values, to remove low expressing transcripts
       # which often have low coefficients of variation
       # gene-level, using the normalized matrix, is already filtered
-      allNonZero <- apply(mat, 1, function(x) all(x>0))
+      allNonZero <- !matrixStats::rowAnys(mat, value = 0)
       mat <- mat[obj$filter_bool & allNonZero, ]
     } else {
       mat <- sleuth:::spread_abundance_by(obj$obs_norm_filt, which_var)
-      allNonZero <- apply(mat, 1, function(x) all(x>0))
+      allNonZero <- !matrixStats::rowAnys(mat, value = 0)
       mat <- mat[allNonZero, ]
     }
     if (filter_length) mat <- mat[row.names(mat) %in% length_bool_ids, ]
-    cov <- apply(mat, 1, function(x) sd(x, na.rm = T) / mean(x, na.rm = T))
-    mean_vals <- apply(mat, 1, mean)
+    mean_vals <- rowMeans(mat, na.rm = T)
+    cov <- matrixStats::rowSds(mat, na.rm = T) / rowMeans(mat, na.rm = T)
     if (num_denoms == 1) {
       min_cov <- min(cov[which(mean_vals >= min_value & cov > 0)], na.rm = T)
       min_index <- which(cov == min_cov)

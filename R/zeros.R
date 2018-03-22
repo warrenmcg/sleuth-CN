@@ -23,21 +23,22 @@ impute_zeros <- function(mat, method = "multiplicative",
   stopifnot(impute_proportion > 0 & impute_proportion < 1)
   stopifnot(is.null(delta) | delta > 0)
   if (method == "multiplicative") {
-    new_mat <- apply(mat, 2, function(col_values) {
-      if (is.null(delta)) {
-        col_values <- ifelse(col_values < .Machine$double.eps / impute_proportion,
-                             0, col_values)
-        detection_limit <- min(col_values[col_values!=0])
-        delta <- detection_limit * impute_proportion
-      } else {
-        col_values <- ifelse(col_values < delta, 0, col_values)
-      }
-      c_i <- sum(col_values)
-      num_zeros <- length(which(col_values == 0))
-      ifelse(col_values == 0,
-             delta,
-             col_values * (1 - (delta * num_zeros) / c_i))
-    })
+    tmp_mat <- matrix(nrow = nrow(mat), ncol = ncol(mat))
+    zeros <- matrix(nrow = nrow(mat), ncol = ncol(mat))
+    new_mat <- matrix(nrow = nrow(mat), ncol = ncol(mat))
+    if(is.null(delta)) {
+      tmp_mat <- ifelse(mat < .Machine$double.eps / impute_proportion, -1, mat)
+      detection_limit <- suppressWarnings(exp(matrixStats::colMins(log(tmp_mat), na.rm = T)))
+      delta <- detection_limit * impute_proportion
+      tmp_mat <- ifelse(tmp_mat == -1, 0, tmp_mat)
+    } else {
+      tmp_mat <- ifelse(mat < delta, 0, mat)
+    }
+    c_i <- colSums(tmp_mat)
+    zeros <- tmp_mat == 0
+    num_zeros <- colSums(zeros)
+    new_mat <- sweep(tmp_mat, 2, (1 - (delta * num_zeros) / c_i), "*")
+    new_mat <- ifelse(zeros, delta, new_mat)
     new_mat
   } else {
     stop("Methods 'EM' and 'bayesian' are not supported yet.")
@@ -55,6 +56,6 @@ impute_zeros <- function(mat, method = "multiplicative",
 #' @return an (N-z) x M numeric matrix, with z
 #'   equal to the number of rows with all zero values.
 remove_essential_zeros <- function(mat) {
-  allZeroRows <- which(rowSums(mat) == 0)
+  allZeroRows <- matrixStats::rowAlls(mat, value = 0)
   mat[-allZeroRows, ]
 }
