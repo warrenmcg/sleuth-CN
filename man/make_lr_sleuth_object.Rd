@@ -8,7 +8,8 @@ make_lr_sleuth_object(sample_to_covariates,
   full_model = stats::formula("~condition"), target_mapping, beta,
   null_model = stats::formula("~1"), run_models = TRUE,
   aggregate_column = NULL, num_cores = parallel::detectCores() - 2,
-  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm", ...)
+  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
+  delta = NULL, impute_proportion = 0.65, ...)
 }
 \arguments{
 \item{sample_to_covariates, }{the sample_to_covariates matrix for sleuth}
@@ -44,6 +45,12 @@ options.}
 
 \item{which_var, }{must be "obs_tpm" or "obs_counts", to indicate
 whether sleuth should model TPMs or estimated counts, respectively}
+
+\item{delta}{a number that is the imputed value during the transformation, to
+avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)}
+
+\item{impute_proportion}{percentage of minimum value that
+becomes the imputed value. Only used if delta is \code{NULL}}
 
 \item{...}{extra options that will be passed on the sleuth.
 you can specify here whether \code{read_bootstrap_tpm} and

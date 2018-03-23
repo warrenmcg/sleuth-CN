@@ -27,6 +27,10 @@
 #'   options.
 #' @param which_var, must be "obs_tpm" or "obs_counts", to indicate
 #'   whether sleuth should model TPMs or estimated counts, respectively
+#' @param delta a number that is the imputed value during the transformation, to
+#'  avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)
+#' @param impute_proportion percentage of minimum value that
+#'  becomes the imputed value. Only used if delta is \code{NULL} 
 #' @param ... extra options that will be passed on the sleuth.
 #'   you can specify here whether \code{read_bootstrap_tpm} and
 #'   \code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
@@ -41,7 +45,8 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                   target_mapping, beta, null_model = stats::formula('~1'),
                                   run_models = TRUE, aggregate_column = NULL,
                                   num_cores = parallel::detectCores() - 2,
-                                  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm", ...)
+                                  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
+                                  delta = NULL, impute_proportion = 0.65, ...)
 {
   stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
   best_denom_var <- ifelse(which_var == 'obs_tpm', 'tpm', 'est_counts')
@@ -56,10 +61,6 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
     extra_bootstrap_summary <- extra_opts$extra_bootstrap_summary
   else
     extra_bootstrap_summary <- TRUE
-
-  if (is.null(extra_opts$impute_proportion))
-    impute_proportion <- 0.65
-  else impute_proportion <- extra_opts$impute_proportion
 
   if (!is.null(denom_name) && denom_name == 'best') {
     denom_name <- choose_denom(sample_info = sample_to_covariates,
@@ -83,8 +84,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   # which downloads the kallisto results and initializes the sleuth object
   # see ?sleuth::sleuth_prep for additional details
   transform_function <- get_lr_function(type = lr_type, denom_name = denom_name,
-                                        delta = extra_opts$delta,
-                                        impute_proportion = impute_proportion)
+                                        delta = delta, impute_proportion = impute_proportion)
   sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
                             target_mapping = target_mapping,
                             norm_fun_counts = norm_identity,
