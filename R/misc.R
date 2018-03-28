@@ -116,7 +116,7 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
                                                 aggregation_column = aggregation_column,
                                                 norm_fun_counts = norm_identity,
                                                 norm_fun_tpm = norm_identity,
-                                                max_bootstrap = 1, num_cores = 1,
+                                                max_bootstrap = 2, num_cores = 1,
                                                 full_model = formula("~1")))
   } else {
     if(!is(obj, "sleuth")) {
