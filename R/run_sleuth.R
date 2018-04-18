@@ -34,8 +34,6 @@
 #' @param ... extra options that will be passed on the sleuth.
 #'   you can specify here whether \code{read_bootstrap_tpm} and
 #'   \code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
-#'   you can also specify here 'delta' and 'impute_proportion' for
-#'   the transformation functions.
 #' @return a sleuth object that has been prepped and fitted using the
 #'   full and null models. It will also run the Wald test (if applicable)
 #'   and the LR test
