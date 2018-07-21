@@ -12,13 +12,16 @@
 #'  delta = impute_proportion * (minimum value in sample) 
 #' @param impute_proportion percentage of minimum value that
 #'  becomes the imputed value. Only used if delta is \code{NULL}
-#' 
+#' @param base the base used for the logarithm. Currently only supports
+#'  "e" or "2" (can also specify the number 2).
+#'
 #' @return a transformation function ready to be used for the
 #'  'transform_fun' option in 'sleuth_prep'
 #' 
 #' @export
 get_lr_function <- function(type = "alr", denom_name = NULL,
-                            delta = NULL, impute_proportion = 0.65 ) {
+                            delta = NULL, impute_proportion = 0.65,
+                            base = "e") {
   type <- match.arg(type, c("alr", "ALR", "clr", "CLR", "iqlr", "IQLR"))
   type <- tolower(type)
   
@@ -30,26 +33,30 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
   e <- new.env()
   e$delta <- delta
   e$impute <- impute_proportion
+  e$base <- base
   if (type == "alr") {
     e$denom <- denom_name
     e$fun <- function(matrix, denom_name = eval(e$denom)) {
       alr_transformation(matrix, denom_name = denom_name,
                          delta = e$delta,
-                         impute_proportion = e$impute)
+                         impute_proportion = e$impute,
+                         base = e$base)
     }
   } else if (type == "iqlr") {
     e$denom <- "iqlr"
     e$fun <- function(matrix) {
       iqlr_transformation(matrix,
                          delta = e$delta,
-                         impute_proportion = e$impute)
+                         impute_proportion = e$impute,
+                         base = e$base)
     }
   } else {
     e$denom <- "all"
     e$fun <- function(matrix) {
-      clr_transformation(matrix, 
-                         delta = e$delta, 
-                         impute_proportion = e$impute)
+      clr_transformation(matrix,
+                         delta = e$delta,
+                         impute_proportion = e$impute,
+                         base = e$base)
     }
   }
   transform_fun <- function(matrix) { e$fun(matrix) }

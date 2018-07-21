@@ -31,6 +31,8 @@
 #'  avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)
 #' @param impute_proportion percentage of minimum value that
 #'  becomes the imputed value. Only used if delta is \code{NULL} 
+#' @param base the base used for the logarithm. Currently only supports
+#'  "e" or "2" (can also specify the number 2).
 #' @param ... extra options that will be passed on the sleuth.
 #'   you can specify here whether \code{read_bootstrap_tpm} and
 #'   \code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
@@ -44,7 +46,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                   run_models = TRUE, aggregate_column = NULL,
                                   num_cores = parallel::detectCores() - 2,
                                   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
-                                  delta = NULL, impute_proportion = 0.65, ...)
+                                  delta = NULL, impute_proportion = 0.65, base = "e", ...)
 {
   stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
   best_denom_var <- ifelse(which_var == 'obs_tpm', 'tpm', 'est_counts')
@@ -82,7 +84,8 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   # which downloads the kallisto results and initializes the sleuth object
   # see ?sleuth::sleuth_prep for additional details
   transform_function <- get_lr_function(type = lr_type, denom_name = denom_name,
-                                        delta = delta, impute_proportion = impute_proportion)
+                                        delta = delta, impute_proportion = impute_proportion,
+                                        base = base)
   sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
                             target_mapping = target_mapping,
                             norm_fun_counts = norm_identity,
