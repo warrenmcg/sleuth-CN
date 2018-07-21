@@ -112,3 +112,66 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   }
   sleuth.obj
 }
+
+#' Return sleuth-ALR Results Table
+#'
+#' This is a wrapper function for \code{sleuth_results} that properly
+#' handles the unique features of sleuth-ALR-transformed data.
+#'
+#' @param obj a \code{sleuth} object
+#' @param test a character string denoting the test to extract. Possible tests can be found by using \code{models(obj)}.
+#' @param test_type 'wt' for Wald test or 'lrt' for Likelihood Ratio test.
+#' @param which_model a character string denoting the model. If extracting a wald test, use the model name.
+#'   Not used if extracting a likelihood ratio test.
+#' @param show_all if \code{TRUE} will show all transcripts (not only the ones
+#' passing filters). The transcripts that do not pass filters will have
+#' \code{NA} values in most columns.
+#' @param pval_aggregate if \code{TRUE} and both \code{target_mapping} and \code{aggregation_column} were provided,
+#' to \code{sleuth_prep}, use lancaster's method to aggregate p-values by the \code{aggregation_column}.
+#' @param weight_func if \code{pval_aggregate} is \code{TRUE}, then this is used to weight the p-values for
+#'   lancaster's method. This must be either the string 'best' or it must be a function that takes the
+#'   observed means of the transcripts as the only defined argument.
+#'
+#' @details For the transcript-level analysis, this produces the same results as the default \code{sleuth_results}.
+#'   However, using the default function for p-value aggregation is incompatible with the standard sleuth-ALR
+#'   transformation. Sleuth-ALR logratios typically include negative values (any feature that is less abundant than the
+#'   chosen 'reference feature(s)' will yield negative logratios), and negative values are not allowed for the
+#'   lancaster method.
+#'
+#'   This method works around this problem by specifying a weighting function that is compatible with the logratios
+#'   and with the lancaster method. The default is to specify the string 'best', which uses an internal function to
+#'   determine how to exponentiate the logratios to get the ratios, using whatever base was used for the transformation.
+#'
+#' @return a \code{data.frame} with the same specification as found in \code{sleuth_results}. See \code{sleuth_results} for
+#'   details.
+#' @export
+sleuth_alr_results <- function(obj, test, test_type = "wt", which_model = "full",
+                               show_all = TRUE, pval_aggregate = obj$pval_aggregate,
+                               weight_func = 'best') {
+  if (pval_aggregate) {
+    if (weight_func == 'best') {
+      weight_func <- get_alr_weight(obj)
+    } else if (!is(weight_func, 'function')) {
+      stop("'weight_func' must either be a function or the string 'best'.")
+    }
+
+    if (test_type == 'lrt') {
+      res <- get_alr_test(obj, test, type = 'lrt')
+    } else {
+      res <- get_alr_test(obj, test, type = 'wt', model = which_model)
+    }
+
+    test_values <- weight_func(res$mean_obs)
+    if (any(test_values < 0)) {
+      stop("The selected 'weight_func' yielded negative values. This should not happen, so check ",
+           "to make sure the correct function was used.")
+    } else if (any(is.na(test_values))) {
+      warning("The selected 'weight_func' yielded NA / NaN values. This should not typically happen, ",
+              "so check to make sure the correct function was used. Continuing with retrieving the results anyway.")
+    }
+  }
+
+  sleuth_results(obj, test = test, test_type = test_type, which_model = which_model,
+                 show_all = show_all, pval_aggregate = pval_aggregate,
+                 weight_func = weight_func)
+}

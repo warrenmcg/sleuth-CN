@@ -34,6 +34,20 @@ get_denom_names <- function(obj) {
   name
 }
 
+# This function retrieves the proper weighting function for 'sleuth_alr_results'.
+# It is exponentiating the mean observations using the inverse of the logarithm
+# used for the original transformation
+get_alr_weight <- function(obj) {
+  stopifnot(is(obj, "sleuth"))
+  base <- environment(obj$transform_fun)$base
+  base <- as.character(base)
+  if (base == "e")
+    func <- exp
+  else (base == "2")
+    func <- function(x) 2^x
+  func
+}
+
 # function to clean the sleuth object to remove the denominator names
 # from the processed data to prevent the denominator from affecting the modeling
 # steps
@@ -63,6 +77,29 @@ clean_denom_names <- function(obj) {
     }
     return(obj)
   }
+}
+
+# function copied from sleuth to get a test. This is used for 'sleuth_alr_results'.
+get_alr_test <- function (obj, label, type, model)
+{
+    stopifnot(is(obj, "sleuth"))
+    stopifnot(type %in% c("lrt", "wt"))
+    res <- NULL
+    if (type == "lrt") {
+        res <- obj$tests[[type]][[label]]
+    }
+    else {
+        if (missing(model)) {
+            stop("must specify a model with wald test")
+        }
+        res <- obj$tests[[type]][[model]][[label]]
+    }
+    if (is.null(res)) {
+        stop("'", label, "' is not a valid label for a test.",
+            " Please see valid models and tests using the functions 'models' and 'tests'.",
+            " Remember to also correctly specify the test type.")
+    }
+    res
 }
 
 #' Choose denominator
