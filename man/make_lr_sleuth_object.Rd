@@ -9,7 +9,7 @@ make_lr_sleuth_object(sample_to_covariates,
   null_model = stats::formula("~1"), run_models = TRUE,
   aggregate_column = NULL, num_cores = parallel::detectCores() - 2,
   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
-  delta = NULL, impute_proportion = 0.65, ...)
+  delta = NULL, impute_proportion = 0.65, base = "e", ...)
 }
 \arguments{
 \item{sample_to_covariates, }{the sample_to_covariates matrix for sleuth}
@@ -52,11 +52,12 @@ avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sampl
 \item{impute_proportion}{percentage of minimum value that
 becomes the imputed value. Only used if delta is \code{NULL}}
 
+\item{base}{the base used for the logarithm. Currently only supports
+"e" or "2" (can also specify the number 2).}
+
 \item{...}{extra options that will be passed on the sleuth.
 you can specify here whether \code{read_bootstrap_tpm} and
-\code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
-you can also specify here 'delta' and 'impute_proportion' for
-the transformation functions.}
+\code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).}
 }
 \value{
 a sleuth object that has been prepped and fitted using the

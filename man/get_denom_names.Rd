@@ -16,5 +16,5 @@ The name of the denominator(s) for the sleuth object
 Function to retrieve the denominator(s) for a sleuth object
 processed using compositional data analysis. If the analysis
 was done using CLR (centered logratio), the denominator name is
-all.
+"all".
 }

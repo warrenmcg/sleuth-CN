@@ -5,7 +5,7 @@
 \title{Get Logration Function}
 \usage{
 get_lr_function(type = "alr", denom_name = NULL, delta = NULL,
-  impute_proportion = 0.65)
+  impute_proportion = 0.65, base = "e")
 }
 \arguments{
 \item{type}{either "alr", "clr", or "iqlr" (also accepts "ALR" / "CLR" / "IQLR")}
@@ -20,6 +20,9 @@ delta = impute_proportion * (minimum value in sample)}
 
 \item{impute_proportion}{percentage of minimum value that
 becomes the imputed value. Only used if delta is \code{NULL}}
+
+\item{base}{the base used for the logarithm. Currently only supports
+"e" or "2" (can also specify the number 2).}
 }
 \value{
 a transformation function ready to be used for the
