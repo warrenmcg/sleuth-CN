@@ -90,7 +90,8 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                             aggregation_column = aggregate_column,
                             read_bootstrap_tpm = read_bootstrap_tpm,
                             extra_bootstrap_summary = extra_bootstrap_summary,
-                            transformation_function = transform_function,
+                            transform_fun_counts = transform_function,
+                            transform_fun_tpm = transform_function,
                             num_cores = num_cores, ...)
 
   sleuth.obj <- clean_denom_names(sleuth.obj)

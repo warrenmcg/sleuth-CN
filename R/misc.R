@@ -19,17 +19,20 @@ geomean <- function(x, na.rm=TRUE){
 #' Function to retrieve the denominator(s) for a sleuth object
 #' processed using compositional data analysis. If the analysis
 #' was done using CLR (centered logratio), the denominator name is
-#' all.
+#' "all".
 #'
 #' @param obj the sleuth object
 #' @return The name of the denominator(s) for the sleuth object
 #' @export
 get_denom_names <- function(obj) {
   stopifnot(is(obj, "sleuth"))
-  name <- environment(obj$transform_fun)$denom_name
+  name <- environment(obj$transform_fun_counts)$denom_name
   if (is.null(name)) {
-    stop("This sleuth object was not processed using compositional data analysis.",
-         "\nThus its denominator does not exist.")
+    name <- environment(obj$transform_fun)$denom_name
+    if (is.null(name)) {
+      stop("This sleuth object was not processed using compositional data analysis.",
+           "\nThus its denominator does not exist.")
+    }
   }
   name
 }
