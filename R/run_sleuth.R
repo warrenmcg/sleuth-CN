@@ -60,7 +60,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   else
     extra_bootstrap_summary <- TRUE
 
-  if (!is.null(denom_name) && denom_name == 'best') {
+  if (!is.null(denom_name) && length(denom_name) == 1 && denom_name == 'best') {
     denom_name <- choose_denom(sample_info = sample_to_covariates,
                                target_mapping = target_mapping,
                                aggregation_column = aggregate_column,
