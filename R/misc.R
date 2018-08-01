@@ -5,6 +5,10 @@
 #' normalization). Normalization is not
 #' necessary for logratio transformations.
 #'
+#' @param mat a numeric matrix, with columns for each
+#'   sample, and rows for each feature
+#' @return a vector of ones with length equal to the
+#'   number of columns (samples) in the input matrix
 #' @export
 norm_identity <- function(mat) {
   rep(1, ncol(mat))

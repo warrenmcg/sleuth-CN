@@ -6,6 +6,14 @@
 \usage{
 norm_identity(mat)
 }
+\arguments{
+\item{mat}{a numeric matrix, with columns for each
+sample, and rows for each feature}
+}
+\value{
+a vector of ones with length equal to the
+  number of columns (samples) in the input matrix
+}
 \description{
 Function to return size factors of just 1
 for sleuth normalization (i.e. lack of
