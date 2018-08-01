@@ -6,7 +6,7 @@
 \usage{
 choose_denom(obj = NULL, sample_info = NULL, target_mapping = NULL,
   aggregation_column = NULL, num_cores = 1, num_denoms = 1,
-  which_var = "est_counts", min_value = 5, method = "cov",
+  which_var = "tpm", min_value = 5, method = "cov",
   filter_length = TRUE)
 }
 \arguments{

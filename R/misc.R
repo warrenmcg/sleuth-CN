@@ -57,7 +57,8 @@ get_alr_weight <- function(obj) {
 clean_denom_names <- function(obj) {
   stopifnot(is(obj, 'sleuth'))
   denom_names <- get_denom_names(obj)
-  if (is.null(denom_names) | denom_names == "all" | denom_names == "iqlr" | length(denom_names) > 1) {
+  len <- length(denom_names)
+  if (len > 1 || (is.null(denom_names) || denom_names %in% c("all", "iqlr"))) {
     return(obj)
   } else {
     if(!is.null(obj$bs_summary$obs_counts)) {
@@ -139,7 +140,7 @@ get_alr_test <- function (obj, label, type, model)
 #' @export
 choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
                          aggregation_column = NULL, num_cores = 1, num_denoms = 1,
-                         which_var = "est_counts", min_value = 5, method = "cov",
+                         which_var = "tpm", min_value = 5, method = "cov",
                          filter_length = TRUE) {
   stopifnot(which_var %in% c("est_counts", "scaled_reads_per_base", "tpm"))
   if (is.null(obj)) {
@@ -151,13 +152,20 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
            "provide target_mapping to do the aggregation on.")
     }
     message("Preparing the sleuth object to select the best denominator")
-    obj <- suppressMessages(sleuth::sleuth_prep(sample_info,
-                                                target_mapping = target_mapping,
-                                                aggregation_column = aggregation_column,
-                                                norm_fun_counts = norm_identity,
-                                                norm_fun_tpm = norm_identity,
-                                                max_bootstrap = 2, num_cores = 1,
-                                                full_model = formula("~1")))
+    if (!is.null(aggregation_column)) {
+      obj <- suppressMessages(sleuth::sleuth_prep(sample_info,
+                                                  target_mapping = target_mapping,
+                                                  aggregation_column = aggregation_column,
+                                                  norm_fun_counts = norm_identity,
+                                                  norm_fun_tpm = norm_identity,
+                                                  max_bootstrap = 2, num_cores = 1,
+                                                  full_model = formula("~1")))
+    } else {
+      obj <- suppressMessages(sleuth::sleuth_prep(sample_info,
+                                                  target_mapping = target_mapping,
+                                                  num_cores = 1,
+                                                  normalize = FALSE))
+    }
   } else {
     if(!is(obj, "sleuth")) {
       stop("You must provide either a sleuth object to 'obj', ",
@@ -168,7 +176,11 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     }
   }
 
-  which_var <- sleuth:::check_quant_mode(obj, which_var)
+  if (!is.null(aggregation_column) && which_var == "est_counts") {
+    which_var <- "scaled_reads_per_base"
+  } else if (is.null(aggregation_column) && which_var == "scaled_reads_per_base") {
+    which_var <- "est_counts"
+  }
 
   if (filter_length) {
     message("filtering by length")
@@ -189,20 +201,20 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
   if (method == "cov") {
     message("Calculating the coefficient of variation of all targets")
     if (is.null(aggregation_column)) {
-      mat <- sleuth:::spread_abundance_by(obj$obs_raw, which_var)
-      # only have a matrix containing filtered values, to remove low expressing transcripts
-      # which often have low coefficients of variation
-      # gene-level, using the normalized matrix, is already filtered
-      allNonZero <- !matrixStats::rowAnys(mat, value = 0)
-      mat <- mat[obj$filter_bool & allNonZero, ]
+      mat <- sleuth::sleuth_to_matrix(obj, 'obs_raw', which_var)
     } else {
-      mat <- sleuth:::spread_abundance_by(obj$obs_norm_filt, which_var)
-      allNonZero <- !matrixStats::rowAnys(mat, value = 0)
-      mat <- mat[allNonZero, ]
+      mat <- sleuth::sleuth_to_matrix(obj, 'obs_norm', which_var)
     }
+    # only have a matrix containing filtered values, to remove low expressing transcripts
+    # which often have low coefficients of variation
+    # gene-level, using the normalized matrix, is already filtered
+    allNonZero <- !matrixStats::rowAnys(mat, value = 0)
+    mat <- mat[obj$filter_bool & allNonZero, ]
+
     if (filter_length) mat <- mat[row.names(mat) %in% length_bool_ids, ]
     mean_vals <- rowMeans(mat, na.rm = T)
     cov <- matrixStats::rowSds(mat, na.rm = T) / rowMeans(mat, na.rm = T)
+
     if (num_denoms == 1) {
       min_cov <- min(cov[which(mean_vals >= min_value & cov > 0)], na.rm = T)
       min_index <- which(cov == min_cov)
