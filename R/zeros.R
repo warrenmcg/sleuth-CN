@@ -23,22 +23,21 @@ impute_zeros <- function(mat, method = "multiplicative",
   stopifnot(impute_proportion > 0 & impute_proportion < 1)
   stopifnot(is.null(delta) | delta > 0)
   if (method == "multiplicative") {
-    tmp_mat <- matrix(nrow = nrow(mat), ncol = ncol(mat))
-    zeros <- matrix(nrow = nrow(mat), ncol = ncol(mat))
-    new_mat <- matrix(nrow = nrow(mat), ncol = ncol(mat))
+    tmp_mat <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
     if(is.null(delta)) {
-      tmp_mat <- ifelse(mat < .Machine$double.eps / impute_proportion, -1, mat)
+      bool <- mat >= .Machine$double.eps / impute_proportion
+      tmp_mat[bool] <- mat[bool]
       detection_limit <- suppressWarnings(exp(matrixStats::colMins(log(tmp_mat), na.rm = T)))
       delta <- detection_limit * impute_proportion
-      tmp_mat <- ifelse(tmp_mat == -1, 0, tmp_mat)
     } else {
-      tmp_mat <- ifelse(mat < delta, 0, mat)
+      bool <- mat >= delta
+      tmp_mat[bool] <- mat[bool]
     }
     c_i <- colSums(tmp_mat)
     zeros <- tmp_mat == 0
     num_zeros <- colSums(zeros)
     new_mat <- sweep(tmp_mat, 2, (1 - (delta * num_zeros) / c_i), "*")
-    new_mat <- ifelse(zeros, delta, new_mat)
+    new_mat[zeros] <- delta
     new_mat
   } else {
     stop("Methods 'EM' and 'bayesian' are not supported yet.")
