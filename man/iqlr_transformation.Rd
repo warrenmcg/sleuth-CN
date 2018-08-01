@@ -4,8 +4,8 @@
 \alias{iqlr_transformation}
 \title{Calculate IQLR}
 \usage{
-iqlr_transformation(mat, base = "e", remove_zeros = FALSE, delta = NULL,
-  impute_proportion = 0.65)
+iqlr_transformation(mat, base = "e", remove_zeros = FALSE,
+  delta = NULL, impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
