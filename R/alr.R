@@ -77,6 +77,9 @@ alr_transformation <- function(mat, denom_name,
                                base = "e", remove_zeros = FALSE,
                                delta = NULL,
                                impute_proportion = 0.65) {
+  stopifnot(is(mat, "matrix"))
+  stopifnot(is(mat[,1], "numeric"))
+
   flip <- FALSE
   if (ncol(mat) > nrow(mat)) {
     mat <- t(mat)
