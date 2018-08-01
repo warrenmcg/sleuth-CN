@@ -10,8 +10,28 @@ norm_identity <- function(mat) {
   rep(1, ncol(mat))
 }
 
-geomean <- function(x, na.rm=TRUE){
-  exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x[x>0]))
+#' Geometric mean
+#'
+#' Function to return the geometric mean. By default,
+#' it only calculates on positive numbers, and gives a
+#' warning if there are any NA values or any numbers
+#' that are zero or negative.
+#'
+#' @param x numeric vector of positive numbers.
+#'
+#' @return the geometric mean of x
+#' @export
+geomean <- function(x){
+  if (any(is.na(x))) {
+    num_na <- sum(is.na(x))
+    warning(paste(num_na, "NA values were found. Omitting them."))
+  }
+  if (length(which(x > 0)) > 0) {
+    num_zero <- length(which(x > 0))
+    warning(paste(num_zero, "values were zero or negative. Omitting them."))
+  }
+  x_vals <- x[!is.na(x) & x > 0]
+  exp(sum(log(x_vals), na.rm = na.rm) / length(x_vals))
 }
 
 #' Get Denom Name(s)

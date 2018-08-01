@@ -3,6 +3,7 @@
 export(alr_transformation)
 export(choose_denom)
 export(clr_transformation)
+export(geomean)
 export(get_denom_names)
 export(get_lr_function)
 export(iqlr_transformation)
