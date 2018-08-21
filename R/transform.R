@@ -140,9 +140,11 @@ get_norm_and_transform_funs <- function(type = "alr", denom_name = NULL,
   t$fun <- function(mat, sf = 1, delta = t$delta, impute = t$impute,
                     method = t$method, base = t$base) {
     logfunc <- switch(base, "e" = log, "2" = log2)
-    mat <- sleuthALR:::impute_zeros(mat, delta = delta,
-                                    impute_proportion = impute,
-                                    method = method)
+    mat <- suppressWarnings(
+      sleuthALR:::impute_zeros(mat, delta = delta,
+                               impute_proportion = impute,
+                               method = method)
+    )
 
     if (length(sf) == 1) {
       logfunc(mat / sf)
