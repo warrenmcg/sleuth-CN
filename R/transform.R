@@ -65,3 +65,96 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
   transform_fun <- function(matrix) { e$fun(matrix) }
   return(transform_fun)
 }
+
+#' @export
+get_norm_and_transform_funs <- function(type = "alr", denom_name = NULL,
+                                        impute_method = "multiplicative",
+                                        denom_method = "geomean",
+                                        delta = NULL, impute_proportion = 0.65,
+                                        base = "e") {
+  base <- as.character(base)
+  base <- match.arg(base, c("e", "2"))
+  denom_method <- match.arg(denom_method, c("geomean", "DESeq2"))
+  impute_method <- match.arg(impute_method, c("multiplicative", "additive"))
+  type <- match.arg(type, c("alr", "ALR", "clr", "CLR", "iqlr", "IQLR"))
+  type <- tolower(type)
+
+  if (type == "alr" & is.null(denom_name)) {
+    stop("you selected the 'ALR' transformation, but no ",
+         "denominator was supplied. 'denom_name' is required ",
+         "for the 'ALR' type.")
+  }
+
+  n <- new.env()
+  if (type != "alr") {
+    denom_name <- NULL
+  }
+
+  n$denoms <- denom_name
+  n$type <- type
+  n$method <- denom_method
+  n$fun <- function(mat, denoms = n$denoms, type = n$type, method = n$method) {
+    if (type == "clr") {
+      denoms <- 1:nrow(mat)
+    } else if (type == "iqlr") {
+      denoms <- sleuthALR::find_iqlr_denoms(mat)
+    } else if (type == "alr") {
+      if (is(denoms, "character") && any(!(denoms %in% rownames(mat)))) {
+        bad_denoms <- denoms[!(denoms %in% rownames(mat))]
+        stop(paste("At least one of the supplied denominator features is",
+                   "not found. Here is the list of denominators not found:",
+                   paste(bad_denoms, collapse = ", ")))
+      } else if (!is(denoms, "character")) {
+        stop(paste("Class", class(denoms), "is unsupported to identify",
+                   "denominator features for normalization"))
+      }
+    }
+
+    if (method == "geomean") {
+      if (length(denoms) == 1) {
+        sf <- mat[denoms, ]
+      } else {
+        mat_nz <- mat[denoms, , drop = FALSE]
+        sf <- apply(mat_nz, 2, sleuthALR::geomean)
+      }
+    } else {
+      mat_nz <- mat[denoms, , drop = FALSE]
+      p <- ncol(mat_nz)
+      geo_means <- exp(rowMeans(log(mat_nz), na.rm = TRUE))
+      s <- sweep(mat_nz, 1, geo_means, `/`)
+      sf <- matrixStats::colMedians(s, na.rm = TRUE)
+      scaling <- exp((-1/p) * sum(log(sf)))
+      sf <- sf * scaling
+    }
+    sf
+  }
+
+  norm_func <- function(mat) n$fun(mat)
+  environment(norm_func) <- n
+
+  t <- new.env()
+  t$delta <- delta
+  t$impute <- impute_proportion
+  t$method <- impute_method
+  t$base <- base
+  t$fun <- function(mat, sf = 1, delta = t$delta, impute = t$impute,
+                    method = t$method, base = t$base) {
+    logfunc <- switch(base, "e" = log, "2" = log2)
+    mat <- sleuthALR:::impute_zeros(mat, delta = delta,
+                                    impute_proportion = impute,
+                                    method = method)
+
+    if (length(sf) == 1) {
+      logfunc(mat / sf)
+    } else if (length(sf) == ncol(mat)) {
+      logfunc(t(t(mat) / sf))
+    } else {
+      stop("please provide a single size factor or a size factor vector equal ",
+           "in length to the number of samples")
+    }
+  }
+  transform_func <- function(mat, sf) t$fun(mat, sf = sf)
+  environment(transform_func) <- t
+
+  list(n_func = norm_func, t_func = transform_func)
+}
