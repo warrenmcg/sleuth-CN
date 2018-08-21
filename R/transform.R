@@ -90,10 +90,10 @@ get_norm_and_transform_funs <- function(type = "alr", denom_name = NULL,
     denom_name <- NULL
   }
 
-  n$denoms <- denom_name
+  n$denom_name <- denom_name
   n$type <- type
   n$method <- denom_method
-  n$fun <- function(mat, denoms = n$denoms, type = n$type, method = n$method) {
+  n$fun <- function(mat, denoms = n$denom_name, type = n$type, method = n$method) {
     if (type == "clr") {
       denoms <- 1:nrow(mat)
     } else if (type == "iqlr") {

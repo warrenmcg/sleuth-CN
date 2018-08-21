@@ -27,6 +27,15 @@
 #'   options.
 #' @param which_var, must be "obs_tpm" or "obs_counts", to indicate
 #'   whether sleuth should model TPMs or estimated counts, respectively
+#' @param lr_method the choice of how to conduct compositional normalization.
+#'   "both" provides a compositional normalization and compositional transformation functions;
+#'   "transform" provides a compositional transformation function that also does the normalization
+#' @param denom_method the choice of what kind of compositional normalization to do
+#'   when more than one feature is used. "geomean" takes the geometric of all features within a sample
+#'   as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
+#'   mean across all samples
+#' @param impute_method the choice of how to impute the rounded zeros.
+#'   only "multiplicative" and "additive" is supported at this time.
 #' @param delta a number that is the imputed value during the transformation, to
 #'  avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)
 #' @param impute_proportion percentage of minimum value that
@@ -46,10 +55,13 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                   run_models = TRUE, aggregate_column = NULL,
                                   num_cores = parallel::detectCores() - 2,
                                   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
-                                  method = "multiplicative",
+                                  lr_method = "both", denom_method = "geomean",
+                                  impute_method = "multiplicative",
                                   delta = NULL, impute_proportion = 0.65, base = "e", ...)
 {
   stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
+  lr_method <- match.arg(lr_method, c("transform", "both"))
+  denom_method <- match.arg(denom_method, c("geomean", "DESeq2"))
   best_denom_var <- ifelse(which_var == 'obs_tpm', 'tpm', 'est_counts')
 
   extra_opts <- list(...)
@@ -84,22 +96,42 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   # make the sleuth object using the PREP method,
   # which downloads the kallisto results and initializes the sleuth object
   # see ?sleuth::sleuth_prep for additional details
-  transform_function <- get_lr_function(type = lr_type, denom_name = denom_name, method = method,
-                                        delta = delta, impute_proportion = impute_proportion,
-                                        base = base)
-  sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
-                            target_mapping = target_mapping,
-                            norm_fun_counts = norm_identity,
-                            norm_fun_tpm = norm_identity,
-                            aggregation_column = aggregate_column,
-                            read_bootstrap_tpm = read_bootstrap_tpm,
-                            extra_bootstrap_summary = extra_bootstrap_summary,
-                            transform_fun_counts = transform_function,
-                            transform_fun_tpm = transform_function,
-                            num_cores = num_cores, ...)
+  if (lr_method == "transform") {
+    transform_function <- get_lr_function(type = lr_type, denom_name = denom_name, method = impute_method,
+                                          delta = delta, impute_proportion = impute_proportion,
+                                          base = base)
+    sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
+                              target_mapping = target_mapping,
+                              norm_fun_counts = norm_identity,
+                              norm_fun_tpm = norm_identity,
+                              aggregation_column = aggregate_column,
+                              read_bootstrap_tpm = read_bootstrap_tpm,
+                              extra_bootstrap_summary = extra_bootstrap_summary,
+                              transform_fun_counts = transform_function,
+                              transform_fun_tpm = transform_function,
+                              num_cores = num_cores, ...)
 
-  sleuth.obj <- clean_denom_names(sleuth.obj)
+  } else {
+    func_list <- get_norm_and_transform_funs(
+      type = lr_type, denom_name = denom_name, impute_method = impute_method,
+      denom_method = denom_method, delta = delta,
+      impute_proportion = impute_proportion, base = base)
+    norm_func <- func_list$n_func
+    transform_func <- func_list$t_func
 
+    sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
+                              target_mapping = target_mapping,
+                              norm_fun_counts = norm_func,
+                              norm_fun_tpm = norm_func,
+                              aggregation_column = aggregate_column,
+                              read_bootstrap_tpm = read_bootstrap_tpm,
+                              extra_bootstrap_summary = extra_bootstrap_summary,
+                              transform_fun_counts = transform_func,
+                              transform_fun_tpm = transform_func,
+                              num_cores = num_cores, ...)
+  }
+
+  sleuth.obj <- clean_denom_names(sleuth.obj, lr_method = lr_method)
   # the default of sleuth_fit is to fit the 'full' model,
   # found in the 'full_model' variable above
   # see ?sleuth::sleuth_fit for more details

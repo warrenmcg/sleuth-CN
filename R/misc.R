@@ -50,14 +50,18 @@ geomean <- function(x){
 #' @export
 get_denom_names <- function(obj) {
   stopifnot(is(obj, "sleuth"))
-  name <- environment(obj$transform_fun_counts)$denom_name
+  name <- environment(obj$norm_fun_counts)$denom_name
   if (is.null(name)) {
-    name <- environment(obj$transform_fun)$denom_name
+    name <- environment(obj$transform_fun_counts)$denom_name
     if (is.null(name)) {
-      stop("This sleuth object was not processed using compositional data analysis.",
-           "\nThus its denominator does not exist.")
+      name <- environment(obj$transform_fun)$denom_name
+      if (is.null(name)) {
+        stop("This sleuth object was not processed using compositional data analysis.",
+             "\nThus its denominator does not exist.")
+      }
     }
   }
+
   name
 }
 
@@ -78,7 +82,7 @@ get_alr_weight <- function(obj) {
 # function to clean the sleuth object to remove the denominator names
 # from the processed data to prevent the denominator from affecting the modeling
 # steps
-clean_denom_names <- function(obj) {
+clean_denom_names <- function(obj, lr_method) {
   stopifnot(is(obj, 'sleuth'))
   denom_names <- get_denom_names(obj)
   len <- length(denom_names)
@@ -95,13 +99,19 @@ clean_denom_names <- function(obj) {
       obj$bs_summary$obs_tpm <- obj$bs_summary$obs_tpm[-indices, ]
       obj$bs_summary$sigma_q_sq_tpm <- obj$bs_summary$sigma_q_sq_tpm[-indices]
     }
-    if(length(obj$bs_quants) > 0 & length(obj$bs_quants[[1]]) > 0) {
-      obj$bs_quants <- lapply(obj$bs_quants, function(sample) {
-        lapply(sample, function(summary) {
-          indices <- which(rownames(summary) %in% denom_names)
-          summary[-indices, ]
+    # If both norm and transform functions are used, then the denominator
+    # feature will still have inferential variation, so its bs_quants can
+    # be used. For 'transform' only, though, each bootstrap is normalized
+    # so the inferential variation will also be zero.
+    if (lr_method == "transform") {
+      if(length(obj$bs_quants) > 0 & length(obj$bs_quants[[1]]) > 0) {
+        obj$bs_quants <- lapply(obj$bs_quants, function(sample) {
+          lapply(sample, function(summary) {
+            indices <- which(rownames(summary) %in% denom_names)
+            summary[-indices, ]
+          })
         })
-      })
+      }
     }
     return(obj)
   }
