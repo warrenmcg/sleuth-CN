@@ -30,12 +30,12 @@ geomean <- function(x){
     num_na <- sum(is.na(x))
     warning(paste(num_na, "NA values were found. Omitting them."))
   }
-  if (length(which(x > 0)) > 0) {
-    num_zero <- length(which(x > 0))
+  if (length(which(x <= 0)) > 0) {
+    num_zero <- length(which(x <= 0))
     warning(paste(num_zero, "values were zero or negative. Omitting them."))
   }
   x_vals <- x[!is.na(x) & x > 0]
-  exp(sum(log(x_vals), na.rm = na.rm) / length(x_vals))
+  exp(sum(log(x_vals)) / length(x_vals))
 }
 
 #' Get Denom Name(s)
