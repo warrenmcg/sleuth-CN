@@ -1,4 +1,4 @@
-#' Get Logration Function
+#' Get Logratio Function
 #'
 #' This helps you create a function that can be input as a
 #' transformation function for 'sleuth_prep'.

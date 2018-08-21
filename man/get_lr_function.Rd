@@ -2,10 +2,11 @@
 % Please edit documentation in R/transform.R
 \name{get_lr_function}
 \alias{get_lr_function}
-\title{Get Logration Function}
+\title{Get Logratio Function}
 \usage{
-get_lr_function(type = "alr", denom_name = NULL, delta = NULL,
-  impute_proportion = 0.65, base = "e")
+get_lr_function(type = "alr", denom_name = NULL,
+  method = "multiplicative", delta = NULL, impute_proportion = 0.65,
+  base = "e")
 }
 \arguments{
 \item{type}{either "alr", "clr", or "iqlr" (also accepts "ALR" / "CLR" / "IQLR")}

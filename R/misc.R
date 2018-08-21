@@ -160,6 +160,7 @@ get_alr_test <- function (obj, label, type, model)
 #'   you must provide an aggregation_column to aggregate transcripts to the gene level.
 #'   You must provide a target_mapping table with a column whose name is this argument.
 #' @param num_cores the number of cores that parallel should use to process samples
+#' @param num_denoms the number of features to select for normalization. The default is one.
 #' @param which_var must be one of "est_counts", "tpm", or "scaled_reads_per_base" (for gene-level counts).
 #' @param min_value the minimum threshold for the mean of 'which_var' for the candidate denominator.
 #' @param method the metric used to select the denominator. Currently only "cov" is implemented.

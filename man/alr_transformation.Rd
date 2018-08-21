@@ -5,7 +5,7 @@
 \title{Calculate ALR}
 \usage{
 alr_transformation(mat, denom_name, base = "e", remove_zeros = FALSE,
-  delta = NULL, impute_proportion = 0.65)
+  method = "multiplicative", delta = NULL, impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
@@ -25,6 +25,15 @@ should remove essential zeros (features with zeros in
 all samples). The default is \code{FALSE} to be
 compatible with sleuth, as its default filter removes
 essential zeros.}
+
+\item{method}{which method to use for imputing zeros.
+'multiplicative' (default) sets all values smaller than
+a imputation value 'delta' (determined by delta or
+impute_proportion) to that imputation value, and reduces
+all other values by the amount X * (1 - delta*num_zero_values /
+sum_constraint). 'additive' is similar to most other tools, and
+just adds the imputation value to all entries ('delta' must
+be specified)}
 
 \item{delta}{a number that is the imputed value. If \code{NULL},
 delta = impute_proportion * (minimum value in sample)}

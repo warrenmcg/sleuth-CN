@@ -26,6 +26,8 @@ You must provide a target_mapping table with a column whose name is this argumen
 
 \item{num_cores}{the number of cores that parallel should use to process samples}
 
+\item{num_denoms}{the number of features to select for normalization. The default is one.}
+
 \item{which_var}{must be one of "est_counts", "tpm", or "scaled_reads_per_base" (for gene-level counts).}
 
 \item{min_value}{the minimum threshold for the mean of 'which_var' for the candidate denominator.}

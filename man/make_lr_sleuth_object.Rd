@@ -9,7 +9,9 @@ make_lr_sleuth_object(sample_to_covariates,
   null_model = stats::formula("~1"), run_models = TRUE,
   aggregate_column = NULL, num_cores = parallel::detectCores() - 2,
   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
-  delta = NULL, impute_proportion = 0.65, base = "e", ...)
+  lr_method = "both", denom_method = "geomean",
+  impute_method = "multiplicative", delta = NULL,
+  impute_proportion = 0.65, base = "e", ...)
 }
 \arguments{
 \item{sample_to_covariates, }{the sample_to_covariates matrix for sleuth}
@@ -45,6 +47,18 @@ options.}
 
 \item{which_var, }{must be "obs_tpm" or "obs_counts", to indicate
 whether sleuth should model TPMs or estimated counts, respectively}
+
+\item{lr_method}{the choice of how to conduct compositional normalization.
+"both" provides a compositional normalization and compositional transformation functions;
+"transform" provides a compositional transformation function that also does the normalization}
+
+\item{denom_method}{the choice of what kind of compositional normalization to do
+when more than one feature is used. "geomean" takes the geometric of all features within a sample
+as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
+mean across all samples}
+
+\item{impute_method}{the choice of how to impute the rounded zeros.
+only "multiplicative" and "additive" is supported at this time.}
 
 \item{delta}{a number that is the imputed value during the transformation, to
 avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)}

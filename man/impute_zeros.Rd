@@ -8,11 +8,12 @@ impute_zeros(mat, method = "multiplicative", delta = NULL,
   impute_proportion = 0.65)
 }
 \arguments{
-\item{mat}{an N x M numeric matrix to be imputed, with N
-targets and M samples.}
+\item{mat}{a numeric matrix to be imputed, with N
+targets and M samples. This method assumes that N > M.
+N x M and M x N matrices are both valid inputs.}
 
 \item{method}{the choice of how to impute the rounded zeros.
-only "multiplicative" is supported at this time.}
+only "multiplicative" and "additive" is supported at this time.}
 
 \item{delta}{the value to impute; if NULL,
 delta = impute_proportion x (the minimum value in a sample)}
@@ -21,10 +22,11 @@ delta = impute_proportion x (the minimum value in a sample)}
 that should be the delta value (default = 65\%).}
 }
 \value{
-an N x M matrix with all zero values imputed.
+a matrix with the same dimensions as input and all zero
+  values imputed by sample.
 }
 \description{
-This uses the multiplicative strategy to impute zeros
+This uses various strategies to impute zeros
 that are considered "rounded zeros", that is, values
 that are zero because the true value is positive but below
 the detection limit (i.e. the sequencing depth). See the
