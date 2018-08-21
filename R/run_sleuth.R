@@ -46,6 +46,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
                                   run_models = TRUE, aggregate_column = NULL,
                                   num_cores = parallel::detectCores() - 2,
                                   lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
+                                  method = "multiplicative",
                                   delta = NULL, impute_proportion = 0.65, base = "e", ...)
 {
   stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
@@ -83,7 +84,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
   # make the sleuth object using the PREP method,
   # which downloads the kallisto results and initializes the sleuth object
   # see ?sleuth::sleuth_prep for additional details
-  transform_function <- get_lr_function(type = lr_type, denom_name = denom_name,
+  transform_function <- get_lr_function(type = lr_type, denom_name = denom_name, method = method,
                                         delta = delta, impute_proportion = impute_proportion,
                                         base = base)
   sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,

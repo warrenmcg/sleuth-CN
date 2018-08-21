@@ -9,7 +9,7 @@
 #' @param mat an N x M numeric matrix to be imputed, with N
 #'   targets and M samples.
 #' @param method the choice of how to impute the rounded zeros.
-#'   only "multiplicative" is supported at this time.
+#'   only "multiplicative" and "additive" is supported at this time.
 #' @param delta the value to impute; if NULL,
 #'   delta = impute_proportion x (the minimum value in a sample)
 #' @param impute_proportion the proportion of the minimum value
@@ -19,7 +19,7 @@
 #'
 impute_zeros <- function(mat, method = "multiplicative",
                          delta = NULL, impute_proportion = 0.65) {
-  method <- match.arg(method, c("multiplicative", "EM", "bayesian"))
+  method <- match.arg(method, c("multiplicative", "additive", "EM", "bayesian"))
   stopifnot(impute_proportion > 0 & impute_proportion < 1)
   stopifnot(is.null(delta) | delta > 0)
   if (method == "multiplicative") {
@@ -39,6 +39,9 @@ impute_zeros <- function(mat, method = "multiplicative",
     new_mat <- sweep(tmp_mat, 2, (1 - (delta * num_zeros) / c_i), "*")
     new_mat[zeros] <- delta
     new_mat
+  } else if (method == "additive") {
+    stopifnot(!is.null(delta) && delta > 0)
+    mat + delta
   } else {
     stop("Methods 'EM' and 'bayesian' are not supported yet.")
   }

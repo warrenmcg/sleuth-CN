@@ -63,6 +63,14 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL) {
 #'   all samples). The default is \code{FALSE} to be
 #'   compatible with sleuth, as its default filter removes
 #'   essential zeros.
+#' @param method which method to use for imputing zeros.
+#'   'multiplicative' (default) sets all values smaller than
+#'   a imputation value 'delta' (determined by delta or
+#'   impute_proportion) to that imputation value, and reduces
+#'   all other values by the amount X * (1 - delta*num_zero_values /
+#'   sum_constraint). 'additive' is similar to most other tools, and
+#'   just adds the imputation value to all entries ('delta' must
+#'   be specified)
 #' @param delta a number that is the imputed value. If \code{NULL},
 #'  delta = impute_proportion * (minimum value in sample)
 #' @param impute_proportion percentage of minimum value that
@@ -75,6 +83,7 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL) {
 #' @export
 alr_transformation <- function(mat, denom_name,
                                base = "e", remove_zeros = FALSE,
+                               method = "multiplicative",
                                delta = NULL,
                                impute_proportion = 0.65) {
   stopifnot(is(mat, "matrix"))

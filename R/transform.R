@@ -20,6 +20,7 @@
 #' 
 #' @export
 get_lr_function <- function(type = "alr", denom_name = NULL,
+                            method = "multiplicative",
                             delta = NULL, impute_proportion = 0.65,
                             base = "e") {
   type <- match.arg(type, c("alr", "ALR", "clr", "CLR", "iqlr", "IQLR"))
@@ -33,11 +34,13 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
   e <- new.env()
   e$delta <- delta
   e$impute <- impute_proportion
+  e$method <- method
   e$base <- base
   if (type == "alr") {
     e$denom <- denom_name
     e$fun <- function(matrix, denom_name = eval(e$denom)) {
       alr_transformation(matrix, denom_name = denom_name,
+                         method = e$method,
                          delta = e$delta,
                          impute_proportion = e$impute,
                          base = e$base)
