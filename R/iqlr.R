@@ -1,3 +1,4 @@
+#' @export
 find_iqlr_denoms <- function(mat, base = "e") {
   clr_vals <- calculate_clr(mat, base)
   clr_var <- matrixStats::rowVars(clr_vals)
