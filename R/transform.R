@@ -38,7 +38,7 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
   e$base <- base
   if (type == "alr") {
     e$denom <- denom_name
-    e$fun <- function(matrix, denom_name = eval(e$denom)) {
+    e$fun <- function(matrix, sf = 1, denom_name = eval(e$denom)) {
       alr_transformation(matrix, denom_name = denom_name,
                          method = e$method,
                          delta = e$delta,
@@ -47,7 +47,7 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
     }
   } else if (type == "iqlr") {
     e$denom <- "iqlr"
-    e$fun <- function(matrix) {
+    e$fun <- function(matrix, sf = 1) {
       iqlr_transformation(matrix,
                          delta = e$delta,
                          impute_proportion = e$impute,
@@ -55,14 +55,14 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
     }
   } else {
     e$denom <- "all"
-    e$fun <- function(matrix) {
+    e$fun <- function(matrix, sf = 1) {
       clr_transformation(matrix,
                          delta = e$delta,
                          impute_proportion = e$impute,
                          base = e$base)
     }
   }
-  transform_fun <- function(matrix) { e$fun(matrix) }
+  transform_fun <- function(matrix, sf) { e$fun(matrix, sf) }
   return(transform_fun)
 }
 
