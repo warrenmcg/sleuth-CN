@@ -44,7 +44,8 @@ impute_zeros <- function(mat, method = "multiplicative",
     if(is.null(delta)) {
       bool <- mat >= .Machine$double.eps / impute_proportion
       tmp_mat[bool] <- mat[bool]
-      detection_limit <- suppressWarnings(exp(matrixStats::colMins(log(tmp_mat), na.rm = T)))
+      mat[!bool] <- .Machine$double.eps / impute_proportion
+      detection_limit <- suppressWarnings(exp(matrixStats::colMins(log(mat), na.rm = T)))
       delta <- detection_limit * impute_proportion
     } else {
       bool <- mat >= delta
