@@ -1,0 +1,132 @@
+
+---
+title. "Introduction to Compositional Normalization with sleuth-ALR"
+author: "Warren A. McGee"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{sleuthALR}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+library(sleuthALR)
+```
+
+# Introduction: What is Compositional Normalization?
+
+When conducting an RNA-Seq differential analysis, most pipelines do the following with the raw FASTQ data:
+1. Estimate the expression of features (transcripts, genes, etc.)
+2. Normalize the data to allow comparison of samples
+3. Modeling to detect differences between conditions of interest
+
+Most approaches treat RNA-Seq data as count data, i.e. the number of fragments that map to a particular feature,
+(see [@Love2014] and [@Anders2013] for examples advocating this approach). Most normalization approaches,
+to quote [@Robinson2010] directly, normalize "the overall expression levels of genes[features] between samples under the
+assumption that the majority of them are not DE[differentially expressed]".
+
+In reality, as described in [@Lovell2011], [@Lovell2015], and [@Quinn2018], RNA-Seq data is actually compositional data,
+meaning that the only meaningful units are proportions or percentages (i.e. what percent of the total fragments map
+to a feature?). This is due to the constraints introduced by the library preparation protocol only preparing a sample
+of the total RNA, usually selecting for a subpopulation of RNAs, and sequencing to an arbitrary sequencing depth.
+Thus, only relative information (how is one feature behaving relative to another feature) is available.
+
+Here, "compositional normalization" is defined as any approach that uses principles from Compositional Data Analysis, and
+features pre-determined to be reliable negative control features, to normalize RNA-Seq data for inter-sample comparison
+and statistical modeling. The most common examples of negative control features are external spike-in RNAs (e.g. ERCC spike-in mix),
+and validated reference genes. This allows for conclusions about changes in copy numbers per cell from the inherently
+compositional RNA-Seq.
+
+The basic idea is analogous to how reference genes are used in qPCR: after choosing one or more "reference features", all
+other features in a sample are normalized to the reference feature(s) by taking the ratio of each feature's expression to the
+expression of the reference feature(s), and then taking the logarithm.
+
+For more information about compositional normalization, please refer to the forthcoming preprint.
+
+Sleuth-ALR has implemented compositional normalization for the popular [sleuth package](). In this vignette, we will introduce
+the full pipeline of a sleuth analysis using sleuth-ALR.
+
+# Loading the example dataset: Yeast Starvation Dataset
+
+First we make sure the `yeastStarvationData` package is installed, and if not, install it from on Github:
+```{r install}
+bool <- suppressMessages(suppressWarnings(require("yeastStarvationData")))
+if (!bool) {
+  devtools::install_github('warrenmcg/yeastStarvationData')
+}
+```
+
+This package contains processed data from [@Marguerat2012], which conducted an experiment in fission yeast
+(*S. pombe*) to see the effects of nitrogen starvation on gene expression. They grew yeast cells in either
+Edinburgh minimal media (EMM), or EMM without a nitrogen source, for 24 hours. They prepared poly-A-enriched
+RNA-Seq libraries from two independent cultures, and from the same samples also used an aliquot to estimate
+the copy numbers per cell of all yeast genes using a NanoString assay. See [@Marguerat2012] for more details, and
+[@Lovell2015] for an informative re-analysis of the data, illustrating the dangers of analyzing this data without
+the external information provided by the Nanostring assay.
+
+Once the package is installed, we load the relevant data that we will need for this analysis:
+```{r load}
+data(denom, package = "yeastStarvationData")
+data(yeastAnnos, package = "yeastStarvationData")
+data(yeastS2C, package = "yeastStarvationData")
+yeastS2C$path <- system.file("extdata", package = "yeastStarvationData",
+                             mustWork = TRUE)
+```
+
+`denom` is a character vector containing the transcript that had the most consistent estimate of copy numbers per cell
+across all yeast genes estimated using Nanostring; this will be used for our compositional normalization example.
+
+`yeastAnnos` is a data frame with fission yeast annotations taken from Ensembl Fungi Genomes release 37.
+
+`yeastS2C` is a "samples-to-covariates" data frame with sample metadata taken from ArrayExpress.
+The `path` column contains the raw data from [@Marguerat2012] processed using kallisto 0.44.0 and
+annotations taken from Ensembl.
+
+# Quick Overview
+
+Only two functions are necessary to perform a full sleuth-ALR analysis: `make_lr_sleuth_object` and `sleuth_alr_results`.
+
+The `make_lr_sleuth_object` is a wrapper function that performs the steps of the sleuth pipeline: `sleuth_prep`, and
+optionally `sleuth_fit`, `sleuth_wt`, and `sleuth_lrt`. Before doing so, though, it generates the necessary transformation
+and normalization functions that perform compositional normalization. 
+
+The `sleuth_alr_results` function is a wrapper for `sleuth_results` with one main additional purpose.
+When doing p-value aggregation (as described in [@Yi2017]), p-values are weighted by the average normalized expression value of
+each transcript. The method requires the weights to be zero or greater. However, after compositional normalization, normalized
+expression values can be negative, which would lead to invalid results during p-value aggregation. The `sleuth_alr_results`
+method changes the default weighting function so that normalized values are transformed from logratios to ratios, which are
+guaranteed to be greater than or equal to zero.
+
+To run a basic sleuth-ALR analysis, run the following code:
+```{r basicPipeline}
+alr_so <- make_lr_sleuth_object(sample_to_covariates = yeastS2C,
+  target_mapping = yeastAnnos, aggregation_column = 'gene_id',
+  full_model = ~condition, null_model = ~1,
+  beta = "conditionnoN", denom_name = denom
+)
+wt_res <- sleuth_alr_results(obj = alr_so, test = "conditionnoN")
+lrt_res <- sleuth_alr_results(obj = alr_so, test = "reduced:full",
+                              test_type = "lrt")
+```
+
+Some of the options used in `sleuth_prep` are present here, and have the same purpose: `sample_to_covariates`,
+`target_mapping`, `full_model`, and `aggregation_column`. See `?sleuth_prep` for more information on these arguments.
+
+Two other options provide additional information to perform a full
+sleuth analysis: `null_model` to provide a null model to compare for a likelihood ratio test using `sleuth_lrt`
+(in this case, a model using condition as a covariate versus an intercept-only model), and `beta` to provide
+a beta for the Wald test (in this case, noN vs control).
+
+The unique argument for sleuth-ALR is `denom_name`: this argument specifies the reference feature(s) to be used for
+normalization.
+
+For `sleuth_alr_results`, the interface is the same as `sleuth_results`, and all of the work is done under the hood.
+
+# Detailed Pipeline and Advanced Options
+
+Coming Soon!
+
+# Comparison of standard sleuth to sleuth-ALR analysis
+
+Coming Soon!
