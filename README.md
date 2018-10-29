@@ -1,7 +1,6 @@
 # sleuth-ALR
 
-Note that this tool is still very much in an alpha stage. If you use this tool, any constructive feedback is greatly appreciated.
-A vignette and full integration with sleuth are coming soon!
+Preprint coming soon! If you use this tool, any constructive feedback is greatly appreciated.
 
 ## Compositional Data Analysis approach to Sleuth
 
@@ -11,6 +10,8 @@ Applying the ideas of John Aitchison, as well as the ideas found in
 the R packages `ALDEx2` and `compositions`, this performs a logratio
 transformation of data created by `kallisto` or `salmon` to be 
 analyzed by `sleuth`.
+
+See the preprint for full details.
 
 ## Installation
 
@@ -22,19 +23,10 @@ devtools::install_github('https://github.com/warrenmcg/sleuth-ALR')
 
 ## Usage
 
-Using this package is very easy. Just use the wrapper function
-`make_lr_sleuth_object`:
+See the [vignette](https://github.com/warrenmcg/sleuth-ALR/blob/master/vignettes/sleuthALR.Rmd)
+for full details!
 
-```
-library(sleuth.comp)
-make_lr_sleuth_object(sample_to_covariates, full_model = stats::formula('~condition'),
-                      target_mapping, beta, null_model = stats::formula('~1'),
-                      aggregate_column = NULL,
-                      num_cores = parallel::detectCores() - 2,
-                      lr_type = "alr", denom_name = NULL, ...)
-```
-
-Compared to running `sleuth_prep`, the only new arguments are the following:
+Compared to running `sleuth_prep` and `sleuth_fit`, the only new arguments are the following:
 + `null_model`: specify both the full and null model, in order to run an LRT
 + `lr_type`: this specifies what kind of logratio transformation you want.
   use `alr` for additive logratio transformation, and use `clr` for centered
@@ -43,6 +35,8 @@ Compared to running `sleuth_prep`, the only new arguments are the following:
   This is the target ID (or index number of the target ID) that you wish to be
   used as a 'reference gene'. If you specify more than one, the geometric mean
   between all of the selected reference genes will be used as the denominator.
++ additional arguments taken by `choose_denom` and `get_lr_functions`. See the help pages
+for those functions for additional details.
 
 ## Options to handle zeros for ALR transformation
 
