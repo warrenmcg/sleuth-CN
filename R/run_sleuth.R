@@ -79,6 +79,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
     denom_name <- choose_denom(sample_info = sample_to_covariates,
                                target_mapping = target_mapping,
                                aggregation_column = aggregate_column,
+                               gene_mode = !is.null(aggregate_column),
                                num_cores = num_cores,
                                which_var = best_denom_var)
   } else if (!is.null(denom_name) && tolower(denom_name) == 'clr') {

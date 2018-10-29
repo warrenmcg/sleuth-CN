@@ -18,6 +18,9 @@
 #'   you must provide an aggregation_column to aggregate transcripts to the gene
 #'   level. You must provide a target_mapping table with a column whose name is
 #'   this argument or a sleuth object with that table.
+#' @param gene_mode If you plan to examine gene-level information and want to do
+#'   count aggregation to select a denominator, this must be set to \code{TRUE}.
+#'   Transcript-level selection will be used if \code{FALSE}.
 #' @param num_cores the number of cores that parallel should use to process samples
 #' @param num_denoms the number of features to select for normalization. The default is one.
 #' @param which_var must be one of "est_counts", "tpm", or "scaled_reads_per_base" (for gene-level counts).
@@ -33,9 +36,9 @@
 #'   that their geometric mean can be used as the denominator.
 #' @export
 choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
-                         aggregation_column = NULL, num_cores = 1, num_denoms = 1,
-                         which_var = "tpm", min_value = 5, method = "cov",
-                         filter_length = TRUE) {
+                         aggregation_column = NULL, gene_mode = FALSE, num_cores = 1,
+                         num_denoms = 1, which_var = "tpm", min_value = 5,
+                         method = "cov", filter_length = TRUE) {
   stopifnot(which_var %in% c("est_counts", "scaled_reads_per_base", "tpm"))
   if (is.null(obj)) {
     if (is.null(sample_info)) {
@@ -44,12 +47,15 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     } else if (!is.null(aggregation_column) & is.null(target_mapping)) {
       stop("If an aggregation_column is provided, you must also ",
            "provide target_mapping to do the aggregation on.")
+    } else if (gene_mode && !is.null(aggregation_column)) {
+      stop("If 'gene_mode' is TRUE, an 'aggregation_column' must be provided")
     }
     message("Preparing the sleuth object to select the best denominator")
-    if (!is.null(aggregation_column)) {
+    if (gene_mode) {
       obj <- suppressMessages(sleuth::sleuth_prep(sample_info,
                                                   target_mapping = target_mapping,
                                                   aggregation_column = aggregation_column,
+                                                  gene_mode = gene_mode,
                                                   norm_fun_counts = norm_identity,
                                                   norm_fun_tpm = norm_identity,
                                                   max_bootstrap = 2, num_cores = 1,
@@ -70,10 +76,10 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     }
   }
 
-  if (!is.null(aggregation_column) && which_var == "est_counts") {
-    which_var <- "scaled_reads_per_base"
-  } else if (is.null(aggregation_column) && which_var == "scaled_reads_per_base") {
-    which_var <- "est_counts"
+  if (gene_mode && denom_var == "est_counts") {
+    denom_var <- "scaled_reads_per_base"
+  } else if (is.null(aggregation_column) && denom_var == "scaled_reads_per_base") {
+    denom_var <- "est_counts"
   }
 
   if (filter_length) {
@@ -81,7 +87,7 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     if(!("length" %in% names(target_mapping))) {
       stop("The 'target_mapping' table is missing a 'length' column. This is required to filter features by length.")
     }
-    if(!is.null(aggregation_column)) {
+    if(gene_mode) {
       transcript_lengths <- data.table::as.data.table(dplyr::select_(target_mapping, aggregation_column, "length"))
       length_bool <- transcript_lengths[, list(bool = all(length >= 300)), by = list(eval(parse(text = aggregation_column)))]
       length_bool_ids <- length_bool[[aggregation_column]][length_bool$bool]

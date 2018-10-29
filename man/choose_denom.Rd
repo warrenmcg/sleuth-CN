@@ -5,9 +5,9 @@
 \title{Choose denominator}
 \usage{
 choose_denom(obj = NULL, sample_info = NULL, target_mapping = NULL,
-  aggregation_column = NULL, num_cores = 1, num_denoms = 1,
-  which_var = "tpm", min_value = 5, method = "cov",
-  filter_length = TRUE)
+  aggregation_column = NULL, gene_mode = FALSE, num_cores = 1,
+  num_denoms = 1, which_var = "tpm", min_value = 5,
+  method = "cov", filter_length = TRUE)
 }
 \arguments{
 \item{obj}{a sleuth object. This or sample_info must be specified. If both
@@ -23,6 +23,10 @@ provided, and it must have aggregation_column as one of its named columns.}
 \item{aggregation_column}{If you plan to examine gene-level information,
 you must provide an aggregation_column to aggregate transcripts to the gene level.
 You must provide a target_mapping table with a column whose name is this argument.}
+
+\item{gene_mode}{If you plan to examine gene-level information and want to do
+count aggregation to select a denominator, this must be set to \code{TRUE}.
+Transcript-level selection will be used if \code{FALSE}.}
 
 \item{num_cores}{the number of cores that parallel should use to process samples}
 
