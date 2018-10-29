@@ -8,6 +8,13 @@
 #'  will be the denominator. More than one is acceptable, and
 #'  you can also input a numeric vector of row numbers instead.
 #'  Note that this will be ignored if 'clr' or 'iqlr' is used.
+#' @param lr_method the choice of how to conduct compositional normalization.
+#'   "both" provides a compositional normalization and compositional transformation functions;
+#'   "transform" provides a compositional transformation function that also does the normalization
+#' @param denom_method the choice of what kind of compositional normalization to do
+#'   when more than one feature is used. "geomean" takes the geometric of all features within a sample
+#'   as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
+#'   mean across all samples
 #' @param delta a number that is the imputed value. If \code{NULL},
 #'  delta = impute_proportion * (minimum value in sample) 
 #' @param impute_proportion percentage of minimum value that
@@ -19,10 +26,17 @@
 #'  'transform_fun' option in 'sleuth_prep'
 #' 
 #' @export
-get_lr_function <- function(type = "alr", denom_name = NULL,
-                            method = "multiplicative",
-                            delta = NULL, impute_proportion = 0.65,
-                            base = "e") {
+get_lr_functions <- function(type = "alr", denom_name = NULL,
+                             lr_method = "both",
+                             denom_method = "geomean",
+                             impute_method = "multiplicative",
+                             delta = NULL, impute_proportion = 0.65,
+                             base = "e") {
+  base <- as.character(base)
+  base <- match.arg(base, c("e", "2"))
+  denom_method <- match.arg(denom_method, c("geomean", "DESeq2"))
+  impute_method <- match.arg(impute_method, c("multiplicative", "additive"))
+  lr_method <- match.arg(lr_method, c("both", "transform"))
   type <- match.arg(type, c("alr", "ALR", "clr", "CLR", "iqlr", "IQLR"))
   type <- tolower(type)
   
@@ -31,60 +45,111 @@ get_lr_function <- function(type = "alr", denom_name = NULL,
          "denominator was supplied. 'denom_name' is required ",
          "for the 'ALR' type.")
   }
+
+  transform_func <- retrieve_transform_func(lr_method = lr_method,
+                                            denom = denom_name,
+                                            delta = delta,
+                                            denom_method = denom_method,
+                                            impute = impute_proportion,
+                                            impute_method = impute_method,
+                                            base = base)
+  if (lr_method == "both") {
+    message(">> ", Sys.time(), " - preparing sleuth object using the ",
+            "sequential normalize and transform approach")
+    norm_func <- retrieve_norm_func(denom = denom_name,
+                                    delta = delta,
+                                    denom_method = denom_method,
+                                    impute = impute_proportion,
+                                    impute_method = impute_method,
+                                    base = base)
+  } else {
+    message(">> ", Sys.time(), " - preparing sleuth object using the ",
+            "all-in-one transformation approach")
+    norm_func <- norm_identity
+  }
+
+  return(list(norm_func = norm_func, transform_func = transform_func))
+}
+
+retrieve_transform_func <- function(type = "alr", lr_method = "both",
+                                    denom = NULL, delta = 0.01,
+                                    denom_method = "geomean",
+                                    impute = 0.65,
+                                    impute_method = "multiplicative",
+                                    base = "e")
+{
   e <- new.env()
   e$delta <- delta
   e$impute <- impute_proportion
-  e$method <- method
+  e$impute_method <- impute_method
   e$base <- base
-  if (type == "alr") {
-    e$denom <- denom_name
-    e$fun <- function(matrix, sf = 1, denom_name = eval(e$denom)) {
-      alr_transformation(matrix, denom_name = denom_name,
-                         method = e$method,
-                         delta = e$delta,
-                         impute_proportion = e$impute,
-                         base = e$base)
+
+  if (lr_method == "transform") {
+    e$denom_method <- denom_method
+    if (type == "alr") {
+      e$denom <- denom_name
+      e$fun <- function(matrix, sf = 1, denom_name = eval(e$denom)) {
+        alr_transformation(matrix, denom_name = denom_name,
+                           base = e$base, delta = e$delta,
+                           denom_method = e$denom_method,
+                           impute_method = e$impute_method,
+                           impute_proportion = e$impute)
+      }
+    } else if (type == "iqlr") {
+      e$denom <- "iqlr"
+      e$fun <- function(matrix, sf = 1) {
+        iqlr_transformation(matrix,
+                            base = e$base, delta = e$delta,
+                            denom_method = e$denom_method,
+                            impute_method = e$impute_method,
+                            impute_proportion = e$impute)
+      }
+    } else {
+      e$denom <- "all"
+      e$fun <- function(matrix, sf = 1) {
+        clr_transformation(matrix,
+                           base = e$base, delta = e$delta,
+                           denom_method = e$denom_method,
+                           impute_method = e$impute_method,
+                           impute_proportion = e$impute)
+      }
     }
-  } else if (type == "iqlr") {
-    e$denom <- "iqlr"
-    e$fun <- function(matrix, sf = 1) {
-      iqlr_transformation(matrix,
-                         delta = e$delta,
-                         impute_proportion = e$impute,
-                         base = e$base)
+  } else if (lr_method == "both") {
+    e$fun <- function(mat, sf = 1, delta = e$delta, impute = e$impute,
+                      impute_method = e$method, base = e$base) {
+      logfunc <- switch(base, "e" = log, "2" = log2)
+      mat <- suppressWarnings(
+        impute_zeros(mat, delta = delta,
+                     impute_proportion = impute,
+                     method = method)
+      )
+
+      if (length(sf) == 1) {
+        logfunc(mat / sf)
+      } else if (length(sf) == ncol(mat)) {
+        logfunc(t(t(mat) / sf))
+      } else {
+        stop("please provide a single size factor or a size factor vector equal ",
+             "in length to the number of samples")
+      }
     }
   } else {
-    e$denom <- "all"
-    e$fun <- function(matrix, sf = 1) {
-      clr_transformation(matrix,
-                         delta = e$delta,
-                         impute_proportion = e$impute,
-                         base = e$base)
-    }
+    stop("'lr_method' must be 'both' or 'transform'")
   }
-  transform_fun <- function(matrix, sf) { e$fun(matrix, sf) }
+
+  transform_func <- function(mat, sf) { e$fun(mat, sf = sf) }
+  environment(transform_func) <- e
+
   return(transform_fun)
 }
 
-#' @export
-get_norm_and_transform_funs <- function(type = "alr", denom_name = NULL,
-                                        impute_method = "multiplicative",
-                                        denom_method = "geomean",
-                                        delta = NULL, impute_proportion = 0.65,
-                                        base = "e") {
-  base <- as.character(base)
-  base <- match.arg(base, c("e", "2"))
-  denom_method <- match.arg(denom_method, c("geomean", "DESeq2"))
-  impute_method <- match.arg(impute_method, c("multiplicative", "additive"))
-  type <- match.arg(type, c("alr", "ALR", "clr", "CLR", "iqlr", "IQLR"))
-  type <- tolower(type)
 
-  if (type == "alr" & is.null(denom_name)) {
-    stop("you selected the 'ALR' transformation, but no ",
-         "denominator was supplied. 'denom_name' is required ",
-         "for the 'ALR' type.")
-  }
-
+retrieve_norm_func <- function(type = "alr", denom_name = NULL,
+                               impute_method = "multiplicative",
+                               denom_method = "geomean",
+                               delta = NULL, impute_proportion = 0.65,
+                               base = "e")
+{
   n <- new.env()
   if (type != "alr") {
     denom_name <- NULL
@@ -132,31 +197,5 @@ get_norm_and_transform_funs <- function(type = "alr", denom_name = NULL,
   norm_func <- function(mat) n$fun(mat)
   environment(norm_func) <- n
 
-  t <- new.env()
-  t$delta <- delta
-  t$impute <- impute_proportion
-  t$method <- impute_method
-  t$base <- base
-  t$fun <- function(mat, sf = 1, delta = t$delta, impute = t$impute,
-                    method = t$method, base = t$base) {
-    logfunc <- switch(base, "e" = log, "2" = log2)
-    mat <- suppressWarnings(
-      sleuthALR:::impute_zeros(mat, delta = delta,
-                               impute_proportion = impute,
-                               method = method)
-    )
-
-    if (length(sf) == 1) {
-      logfunc(mat / sf)
-    } else if (length(sf) == ncol(mat)) {
-      logfunc(t(t(mat) / sf))
-    } else {
-      stop("please provide a single size factor or a size factor vector equal ",
-           "in length to the number of samples")
-    }
-  }
-  transform_func <- function(mat, sf) t$fun(mat, sf = sf)
-  environment(transform_func) <- t
-
-  list(n_func = norm_func, t_func = transform_func)
+  norm_func
 }
