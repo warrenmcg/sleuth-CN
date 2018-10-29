@@ -7,8 +7,8 @@ Description: All RNA-Seq datasets are inherently compositional, which requires a
     'compositions' R packages, this applies a logratio transformation to the data
     that is typically used as input into sleuth.
 Depends: R (>= 3.2.1)
-imports: stats, sleuth (>= 0.28.1), matrixStats
-Suggests: knitr, rmarkdown
+imports: stats, sleuth (>= 0.29.0), matrixStats
+Suggests: knitr, rmarkdown, yeastStarvationData
 VignetteBuilder: knitr
 License: file LICENSE
 Encoding: UTF-8
