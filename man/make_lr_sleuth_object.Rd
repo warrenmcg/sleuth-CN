@@ -4,82 +4,57 @@
 \alias{make_lr_sleuth_object}
 \title{Make Compositional Sleuth Object}
 \usage{
-make_lr_sleuth_object(sample_to_covariates,
-  full_model = stats::formula("~condition"), target_mapping, beta,
-  null_model = stats::formula("~1"), run_models = TRUE,
-  aggregate_column = NULL, num_cores = parallel::detectCores() - 2,
-  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
-  lr_method = "both", denom_method = "geomean",
-  impute_method = "multiplicative", delta = NULL,
-  impute_proportion = 0.65, base = "e", ...)
+make_lr_sleuth_object(sample_to_covariates, denom_name, lr_type = "alr",
+  full_model = NULL, beta = NULL, null_model = NULL,
+  run_models = FALSE, ...)
 }
 \arguments{
-\item{sample_to_covariates, }{the sample_to_covariates matrix for sleuth}
+\item{sample_to_covariates, }{the sample_to_covariates \code{data.frame} for
+sleuth}
+
+\item{denom_name, }{target ID names or index numbers of features to be used
+for the denominator when using compositional analysis; this argument is
+required for the ALR transformation. Using 'clr' or 'iqlr' for 'lr_type' 
+overrides this argument (and the CLR / IQLR transformation will be used).
+If 'best' is used, then the internal function \code{choose_best_denoms}
+will be used to identify the feature(s) with the most consistent abundance
+across all samples in the experiment. See \link{choose_denom} for extra
+options.}
+
+\item{lr_type, }{either "alr", "clr", or "iqlr" ("ALR" / "CLR" / "IQLR" are
+also accepted), indicating additive, centered, or interquartile logratio
+transformation}
 
 \item{full_model, }{the full model for sleuth}
 
-\item{target_mapping, }{the target mapping data frame for sleuth}
-
-\item{beta, }{the beta you wish to use for the Wald test. If NULL,
-the Wald test will be skipped.}
+\item{beta, }{the beta you wish to use for the Wald test. If \code{NULL}
+(the default), the Wald test will be skipped.}
 
 \item{null_model, }{the null model to be the baseline for the LR test.
-default is the intercept only model (~1).}
+If \code{NULL} (the default), this step is skipped.}
 
 \item{run_models}{boolean to see if the modeling step should be done.
-If \code{FALSE}, only sleuth_prep is done. Default is \code{TRUE}.}
+If \code{FALSE}, the default, only sleuth_prep is done.}
 
-\item{aggregate_column, }{character indicating the column in
-\code{target_mapping} to be used for "gene-level" sleuth analysis.}
-
-\item{num_cores, }{the number of cores to be used for sleuth analysis}
-
-\item{lr_type, }{either "alr" or "clr" ("ALR" / "CLR" also accepted),
-indicating additive logratio or centered logratio transformation}
-
-\item{denom_name, }{target ID names or index numbers of denominators;
-required for the ALR transformation. If 'clr' or 'iqlr' is used, this overrides
-'lr_type' and the CLR / IQLR transformation will be used. If lr_type is 'clr' or 'iqlr',
-this argument will be ignored. If 'best' is used, then the internal function
-choose_best_denoms will be used to identify the feature(s) with the most consistent
-abundance across all samples in the experiment. See \link{choose_denom} for extra
-options.}
-
-\item{which_var, }{must be "obs_tpm" or "obs_counts", to indicate
-whether sleuth should model TPMs or estimated counts, respectively}
-
-\item{lr_method}{the choice of how to conduct compositional normalization.
-"both" provides a compositional normalization and compositional transformation functions;
-"transform" provides a compositional transformation function that also does the normalization}
-
-\item{denom_method}{the choice of what kind of compositional normalization to do
-when more than one feature is used. "geomean" takes the geometric of all features within a sample
-as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
-mean across all samples}
-
-\item{impute_method}{the choice of how to impute the rounded zeros.
-only "multiplicative" and "additive" is supported at this time.}
-
-\item{delta}{a number that is the imputed value during the transformation, to
-avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)}
-
-\item{impute_proportion}{percentage of minimum value that
-becomes the imputed value. Only used if delta is \code{NULL}}
-
-\item{base}{the base used for the logarithm. Currently only supports
-"e" or "2" (can also specify the number 2).}
-
-\item{...}{extra options that will be passed on the sleuth.
-you can specify here whether \code{read_bootstrap_tpm} and
-\code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).}
+\item{...}{extra options that will tweak the analysis, specifically for
+\link{\code{get_lr_functions}}, \code{sleuth_prep}, and \code{sleuth_fit}.
+for details on which options can be specified for \code{sleuth_prep} and
+\code{sleuth_fit}, please see ?get_lr_functions, ?sleuth::sleuth_prep or
+?sleuth::sleuth_fit for details. Note that for \code{sleuth_prep},
+\code{read_bootstrap_tpm} and \code{extra_bootstrap_summary} are \code{TRUE}
+by default to allow for modeling estimated or TPMs downstream.}
 }
 \value{
-a sleuth object that has been prepped and fitted using the
-  full and null models. It will also run the Wald test (if applicable)
-  and the LR test
+a sleuth object that has been prepped using the compositional
+  analysis for the normalization and transformation steps, and fitted
+  using the full model (if \code{run_models} is \code{TRUE}) and null model
+  (if specified). It will also run the Wald test (if \code{beta} is
+  specified) and the LR test (if applicable).
 }
 \description{
-This is a wrapper function for \code{sleuth_prep} that applies
-the compositional data analysis approach. Many of the arguments
-are ones that will be input into \code{sleuth_prep}.
+This is a wrapper function for the sleuth pipeline that applies
+the compositional normalization approach. Many of the arguments
+are ones that will be input into different parts of the sleuth
+pipeline: \code{sleuth_prep}, \code{sleuth_fit}, \code{sleuth_wt},
+and \code{sleuth_lrt}.
 }

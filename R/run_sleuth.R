@@ -1,87 +1,75 @@
 #' Make Compositional Sleuth Object
 #'
-#' This is a wrapper function for \code{sleuth_prep} that applies
-#' the compositional data analysis approach. Many of the arguments
-#' are ones that will be input into \code{sleuth_prep}.
+#' This is a wrapper function for the sleuth pipeline that applies
+#' the compositional normalization approach. Many of the arguments
+#' are ones that will be input into different parts of the sleuth
+#' pipeline: \code{sleuth_prep}, \code{sleuth_fit}, \code{sleuth_wt},
+#' and \code{sleuth_lrt}.
 #' 
-#' @param sample_to_covariates, the sample_to_covariates matrix for sleuth
-#' @param full_model, the full model for sleuth
-#' @param target_mapping, the target mapping data frame for sleuth
-#' @param beta, the beta you wish to use for the Wald test. If NULL,
-#'   the Wald test will be skipped.
-#' @param null_model, the null model to be the baseline for the LR test.
-#'   default is the intercept only model (~1).
-#' @param run_models boolean to see if the modeling step should be done.
-#'   If \code{FALSE}, only sleuth_prep is done. Default is \code{TRUE}.
-#' @param aggregate_column, character indicating the column in
-#'   \code{target_mapping} to be used for "gene-level" sleuth analysis.
-#' @param num_cores, the number of cores to be used for sleuth analysis
-#' @param lr_type, either "alr" or "clr" ("ALR" / "CLR" also accepted),
-#'   indicating additive logratio or centered logratio transformation
-#' @param denom_name, target ID names or index numbers of denominators;
-#'   required for the ALR transformation. If 'clr' or 'iqlr' is used, this overrides
-#'   'lr_type' and the CLR / IQLR transformation will be used. If lr_type is 'clr' or 'iqlr',
-#'   this argument will be ignored. If 'best' is used, then the internal function
-#'   choose_best_denoms will be used to identify the feature(s) with the most consistent
-#'   abundance across all samples in the experiment. See \link{choose_denom} for extra
+#' @param sample_to_covariates, the sample_to_covariates \code{data.frame} for
+#'   sleuth
+#' @param denom_name, target ID names or index numbers of features to be used
+#'   for the denominator when using compositional analysis; this argument is
+#'   required for the ALR transformation. Using 'clr' or 'iqlr' for 'lr_type' 
+#'   overrides this argument (and the CLR / IQLR transformation will be used).
+#'   If 'best' is used, then the internal function \code{choose_best_denoms}
+#'   will be used to identify the feature(s) with the most consistent abundance
+#'   across all samples in the experiment. See \link{choose_denom} for extra
 #'   options.
-#' @param which_var, must be "obs_tpm" or "obs_counts", to indicate
-#'   whether sleuth should model TPMs or estimated counts, respectively
-#' @param lr_method the choice of how to conduct compositional normalization.
-#'   "both" provides a compositional normalization and compositional transformation functions;
-#'   "transform" provides a compositional transformation function that also does the normalization
-#' @param denom_method the choice of what kind of compositional normalization to do
-#'   when more than one feature is used. "geomean" takes the geometric of all features within a sample
-#'   as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
-#'   mean across all samples
-#' @param impute_method the choice of how to impute the rounded zeros.
-#'   only "multiplicative" and "additive" is supported at this time.
-#' @param delta a number that is the imputed value during the transformation, to
-#'  avoid zeros. If \code{NULL}, delta = impute_proportion * (minimum value in sample)
-#' @param impute_proportion percentage of minimum value that
-#'  becomes the imputed value. Only used if delta is \code{NULL} 
-#' @param base the base used for the logarithm. Currently only supports
-#'  "e" or "2" (can also specify the number 2).
-#' @param ... extra options that will be passed on the sleuth.
-#'   you can specify here whether \code{read_bootstrap_tpm} and
-#'   \code{extra_bootstrap_summary} should be \code{FALSE} (default \code{TRUE}).
-#' @return a sleuth object that has been prepped and fitted using the
-#'   full and null models. It will also run the Wald test (if applicable)
-#'   and the LR test
+#' @param lr_type, either "alr", "clr", or "iqlr" ("ALR" / "CLR" / "IQLR" are
+#'   also accepted), indicating additive, centered, or interquartile logratio
+#'   transformation
+#' @param full_model, the full model for sleuth
+#' @param beta, the beta you wish to use for the Wald test. If \code{NULL}
+#'   (the default), the Wald test will be skipped.
+#' @param null_model, the null model to be the baseline for the LR test.
+#'   If \code{NULL} (the default), this step is skipped.
+#' @param run_models boolean to see if the modeling step should be done.
+#'   If \code{FALSE}, the default, only sleuth_prep is done.
+#' @param ... extra options that will tweak the analysis, specifically for
+#'  \link{\code{get_lr_functions}}, \code{sleuth_prep}, and \code{sleuth_fit}.
+#'  for details on which options can be specified for \code{sleuth_prep} and
+#'  \code{sleuth_fit}, please see ?get_lr_functions, ?sleuth::sleuth_prep or
+#'  ?sleuth::sleuth_fit for details. Note that for \code{sleuth_prep},
+#'  \code{read_bootstrap_tpm} and \code{extra_bootstrap_summary} are \code{TRUE}
+#'  by default to allow for modeling estimated or TPMs downstream.
+#' @return a sleuth object that has been prepped using the compositional
+#'   analysis for the normalization and transformation steps, and fitted
+#'   using the full model (if \code{run_models} is \code{TRUE}) and null model
+#'   (if specified). It will also run the Wald test (if \code{beta} is
+#'   specified) and the LR test (if applicable).
 #'
 #' @export
-make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::formula('~condition'),
-                                  target_mapping, beta, null_model = stats::formula('~1'),
-                                  run_models = TRUE, aggregate_column = NULL,
-                                  num_cores = parallel::detectCores() - 2,
-                                  lr_type = "alr", denom_name = NULL, which_var = "obs_tpm",
-                                  lr_method = "both", denom_method = "geomean",
-                                  impute_method = "multiplicative",
-                                  delta = NULL, impute_proportion = 0.65, base = "e", ...)
+make_lr_sleuth_object <- function(sample_to_covariates, denom_name,
+                                  lr_type = "alr", full_model = NULL,
+                                  beta = NULL, null_model = NULL,
+                                  run_models = FALSE, ...)
 {
-  stopifnot(which_var %in% c('obs_tpm', 'obs_counts'))
-  lr_method <- match.arg(lr_method, c("transform", "both"))
-  denom_method <- match.arg(denom_method, c("geomean", "DESeq2"))
-  best_denom_var <- ifelse(which_var == 'obs_tpm', 'tpm', 'est_counts')
+  opts_list <- process_extra_opts(...)
+  prep_opts <- opts_list$prep_opts
+  fit_opts <- opts_list$fit_opts
+  alr_opts <- opts_list$alr_opts
+  choose_opts <- opts_list$choose_opts
 
-  extra_opts <- list(...)
-  if ("read_bootstrap_tpm" %in% names(extra_opts))
-    read_bootstrap_tpm <- extra_opts$read_bootstrap_tpm
-  else
-    read_bootstrap_tpm <- TRUE
-
-  if ("extra_bootstrap_summary" %in% names(extra_opts))
-    extra_bootstrap_summary <- extra_opts$extra_bootstrap_summary
-  else
-    extra_bootstrap_summary <- TRUE
+  if (run_models && !is.null(extra_opts$beta)) {
+    test_design <- model.matrix(full_model, data = sample_to_covariates)
+    if (!beta %in% colnames(test_design)) {
+      stop("It does not seem that the specified 'beta' is found among the ",
+           "possible betas for your specified 'sample_to_covariates' and ",
+           "'full_model'. Here are the possible betas: ",
+           paste(colnames(test_design), collapse = ", "))
+    }
+  } else if (run_models && !is.null(full_model)) {
+    stop("If 'run_models' is TRUE, then 'full_model' must be specified")
+  }
 
   if (!is.null(denom_name) && length(denom_name) == 1 && denom_name == 'best') {
-    denom_name <- choose_denom(sample_info = sample_to_covariates,
-                               target_mapping = target_mapping,
-                               aggregation_column = aggregate_column,
-                               gene_mode = !is.null(aggregate_column),
-                               num_cores = num_cores,
-                               which_var = best_denom_var)
+    opts <- list(sample_info = sample_to_covariates,
+                 target_mapping = prep_opts$target_mapping,
+                 aggregation_column = prep_opts$aggregation_column,
+                 num_cores = prep_opts$num_cores)
+    choose_opts <- c(opts, choose_opts)
+    denom_name <- do.call(choose_denom, choose_opts)
   } else if (!is.null(denom_name) && tolower(denom_name) == 'clr') {
     if(tolower(lr_type) != 'clr') {
       message("'denom_name' is 'clr', but 'lr_type' is not 'clr'. The lr_type will be overriden and is now 'clr'")
@@ -94,43 +82,61 @@ make_lr_sleuth_object <- function(sample_to_covariates, full_model = stats::form
     }
   }
 
-  # make the sleuth object using the PREP method,
-  # which downloads the kallisto results and initializes the sleuth object
-  # see ?sleuth::sleuth_prep for additional details
-  func_list <- get_lr_functions(
-    type = lr_type, denom_name = denom_name, lr_method = lr_method,
-    denom_method = denom_method, impute_method = impute_method,
-    delta = delta, impute_proportion = impute_proportion, base = base
-  )
+  # create the ALR normalization and transformation functions
+  # see `?get_lr_functions` for additional details
+  opts <- list(type = lr_type, denom_name = denom_name)
+  alr_opts <- c(opts, alr_opts)
+
+  func_list <- do.call(get_lr_functions, args = alr_opts)
   norm_func <- func_list$n_func
   transform_func <- func_list$t_func
 
-  sleuth.obj <- sleuth::sleuth_prep(sample_to_covariates, full_model,
-                                    target_mapping = target_mapping,
-                                    norm_fun_counts = norm_func,
-                                    norm_fun_tpm = norm_func,
-                                    aggregation_column = aggregate_column,
-                                    read_bootstrap_tpm = read_bootstrap_tpm,
-                                    extra_bootstrap_summary = extra_bootstrap_summary,
-                                    transform_fun_counts = transform_func,
-                                    transform_fun_tpm = transform_func,
-                                    num_cores = num_cores, ...)
+  # make the sleuth object using the `sleuth_prep` function,
+  # which downloads the kallisto results and initializes the sleuth object
+  # see `?sleuth::sleuth_prep` for additional details
+  sleuth_opts <- list(sample_to_covariates = sample_to_covariates,
+                      full_model = full_model,
+                      norm_fun_counts = norm_func,
+                      norm_fun_tpm = norm_func,
+                      transform_fun_counts = transform_func,
+                      transform_fun_tpm = transform_func)
 
+  prep_opts <- c(sleuth_opts, prep_opts)
+  sleuth.obj <- do.call(sleuth::sleuth_prep, args = prep_opts)
+
+  # this line of code makes sure that, if a single feature is used as a
+  # denominator, it is disqualified from the fitting steps, since it
+  # is no longer dependent.
   sleuth.obj <- clean_denom_names(sleuth.obj, lr_method = lr_method)
+
   # the default of sleuth_fit is to fit the 'full' model,
   # found in the 'full_model' variable above
   # see ?sleuth::sleuth_fit for more details
   if (run_models) {
-    sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, which_var = which_var)
+    message(">> ", Sys.time(), " - fitting full model")
+    full_opts <- list(obj = sleuth.obj)
+    fit_opts <- c(full_opts, fit_opts)
+    sleuth.obj <- do.call(sleuth::sleuth_fit, args = fit_opts)
     # use Wald test to see significance of the chosen 'beta' on expression
-    if (!is.null(beta))
+    if (!is.null(beta)) {
       sleuth.obj <- sleuth::sleuth_wt(sleuth.obj, beta)
-    message(">> ", Sys.time(), " - fitting null model and ",
-            "performing likelihood ratio test")
+    } else {
+      message("no 'beta' specified; skipping Wald test for the full model")
+    }
     # use likelihood ratio test to look at the null_model versus the full_model
-    sleuth.obj <- sleuth::sleuth_fit(sleuth.obj, formula = null_model,
-                                     fit_name = "reduced", which_var = which_var)
-    sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
+    if (!is.null(null_model)) {
+      message(">> ", Sys.time(), " - fitting null model and ",
+              "performing likelihood ratio test")
+      null_opts <- list(formula = null_model, fit_name = "reduced")
+      fit_opts <- c(fit_opts, null_opts)
+      sleuth.obj <- do.call(sleuth::sleuth_fit, fit_opts)
+      sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
+    } else {
+      message("no 'null_model' specified; skipping null model fitting and ",
+              "likelihood ratio test")
+    }
+  } else {
+    message("'run_models' is FALSE; skipping fitting and testing steps")
   }
   sleuth.obj
 }
