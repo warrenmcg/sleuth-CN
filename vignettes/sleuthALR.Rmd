@@ -2,15 +2,39 @@
 ---
 title. "Introduction to Compositional Normalization with sleuth-ALR"
 author: "Warren A. McGee"
-output: rmarkdown::html_vignette
+date: "`r format(Sys.Date(), '%m/%d/%Y')`"
+abstract: >
+  Most approaches to detecting differentially expressed features from bulk RNA-Seq
+  data treat the data as count data, and further these approaches make the
+  assumption when normalizing the data that the total RNA per cell is the same
+  across every sample. In reality, because of the protocol for generating RNA-Seq
+  data, the number of fragments sequenced is not proportional to the total RNA per
+  present. Thus, the data is inherently compositional, meaning that only units
+  expressing percentages/proportions are meaningful and that values only carry
+  relative information, even though absolute RNA copy numbers are often of
+  interest. Sleuth-ALR is an extension of the popular sleuth package that
+  explicitly models the data as compositional. This vignette explains the
+  use of this package and demonstrates a tpyical workflow for and interpretation
+  of an RNA-Seq analysis, starting from results after pseudoalignment (HDF5 files
+  produced by kallisto or Salmon).
+  sleuthALR package version: `r packageVersion("sleuthALR")`
+output:
+  rmarkdown::html_vignette
+  highlight: pygments
+  toc: true
+  fig_width: 5
+bibliography: library.bib
 vignette: >
-  %\VignetteIndexEntry{sleuthALR}
+  %\VignetteIndexEntry{Introduction to Compositional Normalization with sleuth-ALR}
   %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
   \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, echo = FALSE, message = FALSE}
-knitr::opts_chunk$set(collapse = T, comment = "#>")
+knitr::opts_chunk$set(tidy = FALSE, cache = TRUE,
+                      dev = "png", message = FALSE,
+                      error = FALSE, collapse = T, comment = "#>")
 library(sleuthALR)
 ```
 
@@ -19,12 +43,12 @@ library(sleuthALR)
 When conducting an RNA-Seq differential analysis, most pipelines do the following with the raw FASTQ data:
 1. Estimate the expression of features (transcripts, genes, etc.)
 2. Normalize the data to allow comparison of samples
-3. Modeling to detect differences between conditions of interest
+3. Statistical modeling to detect differences between conditions of interest
 
 Most approaches treat RNA-Seq data as count data, i.e. the number of fragments that map to a particular feature,
 (see [@Love2014] and [@Anders2013] for examples advocating this approach). Most normalization approaches,
 to quote [@Robinson2010] directly, normalize "the overall expression levels of genes[features] between samples under the
-assumption that the majority of them are not DE[differentially expressed]".
+assumption that the majority of them are not DE [differentially expressed]".
 
 In reality, as described in [@Lovell2011], [@Lovell2015], and [@Quinn2018], RNA-Seq data is actually compositional data,
 meaning that the only meaningful units are proportions or percentages (i.e. what percent of the total fragments map
@@ -112,9 +136,12 @@ lrt_res <- sleuth_alr_results(obj = alr_so, test = "reduced:full",
 
 Some of the options used in `sleuth_prep` are present here, and have the same purpose: `sample_to_covariates`,
 `target_mapping`, `full_model`, and `aggregation_column`. See `?sleuth_prep` for more information on these arguments.
+`make_lr_sleuth_object` can take any arguments used by `sleuth_prep` or `sleuth_fit` (except the arguments specifying
+the normalization and transformation functions, as those are produced internally). `sample_to_covariates` is the only
+required argument.
 
 Two other options provide additional information to perform a full
-sleuth analysis: `null_model` to provide a null model to compare for a likelihood ratio test using `sleuth_lrt`
+sleuth-ALR analysis: `null_model` to provide a null model to compare for a likelihood ratio test using `sleuth_lrt`
 (in this case, a model using condition as a covariate versus an intercept-only model), and `beta` to provide
 a beta for the Wald test (in this case, noN vs control).
 
@@ -122,6 +149,31 @@ The unique argument for sleuth-ALR is `denom_name`: this argument specifies the 
 normalization.
 
 For `sleuth_alr_results`, the interface is the same as `sleuth_results`, and all of the work is done under the hood.
+
+# Interpretation: what if a dataset does not have a validated negative control?
+
+If you have a validated negative control feature (e.g. external spike-ins, a validated reference gene, etc), then
+using sleuth-ALR with these features will result in much improved estimate of the changes occurring in the RNA copy
+numbers, since the data is now anchored to features with approximately constant absolute expression.
+
+However, if a dataset does not have such a feature available (the vast majority of already published bulk RNA-Seq
+datasets are in this category), the data will never be able to directly reveal how RNA copy numbers are changing.
+It will only be able to reveal how features are changing relative to other features. There is some innovative work
+look at differential proportionality [@Erb2018], which would not need normalization. However, for those that wish to
+still use the traditional pipeline and normalization, sleuth-ALR offers a solution with the trade-off of interpretability:
+one can use a feature with the most consistent abundance (estimated counts, TPMs, etc), or a set of features that with
+approximately consistence abundances, then these could be used for normalization. In this situation, the new interpretation
+is "How are features changing relative to the global trend?" or "How are features changing relative to the total change in
+this RNA population (e.g. poly-A+ RNA)?"
+
+If there is a global trend in total RNA per cell, the data cannot in principle reveal that information. However, it can
+tell you how features are changing relative to that trend. There will be features that are increasing or decreasing in
+an extreme that will be detected as such, but there will be a large number of features that have more modest changes or
+no change at all that will be detected as changing or changing in the opposite direction. These can still yield
+interesting biology, as the competitive approach taken by GSEA [@Maciejewski2014] can attest, but one would have to let go of
+putting stock into the magnitude or even the direction of change.
+
+See the preprint for more information.
 
 # Detailed Pipeline and Advanced Options
 
