@@ -3,7 +3,7 @@
 #' This function selects the best denominator for an ALR
 #' transformation based on which feature has the most consistent
 #' proportion across all samples. Currently, only "coefficient of variation"
-#' (method "cov") is implemented. Users can supply a "sleuth" object, or
+#' (choose_method "cov") is implemented. Users can supply a "sleuth" object, or
 #' alternatively can supply a sample_to_covariates table. It runs a truncated
 #' form of sleuth_prep to get raw counts and TPMs to calculate the metric.
 #'
@@ -23,9 +23,9 @@
 #'   Transcript-level selection will be used if \code{FALSE}.
 #' @param num_cores the number of cores that parallel should use to process samples
 #' @param num_denoms the number of features to select for normalization. The default is one.
-#' @param which_var must be one of "est_counts", "tpm", or "scaled_reads_per_base" (for gene-level counts).
-#' @param min_value the minimum threshold for the mean of 'which_var' for the candidate denominator.
-#' @param method the metric used to select the denominator. Currently only "cov" is implemented.
+#' @param denom_var must be one of "est_counts", "tpm", or "scaled_reads_per_base" (for gene-level counts).
+#' @param min_value the minimum threshold for the mean of 'denom_var' for the candidate denominator.
+#' @param choose_method the metric used to select the denominator. Currently only "cov" is implemented.
 #' @param filter_length boolean to filter possible denominators by length. This requires that 'length'
 #'   is a column in the target_mapping. If \code{TRUE}, then all features with a length less
 #'   than 300 bases is excluded from consideration. This is recommended when modeling TPMs,
@@ -37,9 +37,9 @@
 #' @export
 choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
                          aggregation_column = NULL, gene_mode = FALSE, num_cores = 1,
-                         num_denoms = 1, which_var = "tpm", min_value = 5,
-                         method = "cov", filter_length = TRUE) {
-  stopifnot(which_var %in% c("est_counts", "scaled_reads_per_base", "tpm"))
+                         num_denoms = 1, denom_var = "tpm", min_value = 5,
+                         choose_method = "cov", filter_length = TRUE) {
+  stopifnot(denom_var %in% c("est_counts", "scaled_reads_per_base", "tpm"))
   if (is.null(obj)) {
     if (is.null(sample_info)) {
       stop("You must provide either a sleuth object to 'obj', ",
@@ -98,12 +98,12 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     }
   }
 
-  if (method == "cov") {
+  if (choose_method == "cov") {
     message("Calculating the coefficient of variation of all targets")
     if (is.null(aggregation_column)) {
-      mat <- sleuth::sleuth_to_matrix(obj, 'obs_raw', which_var)
+      mat <- sleuth::sleuth_to_matrix(obj, 'obs_raw', denom_var)
     } else {
-      mat <- sleuth::sleuth_to_matrix(obj, 'obs_norm', which_var)
+      mat <- sleuth::sleuth_to_matrix(obj, 'obs_norm', denom_var)
     }
     # only have a matrix containing filtered values, to remove low expressing transcripts
     # which often have low coefficients of variation
@@ -126,8 +126,8 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
     }
     denom_name <- names(cov)[min_index]
   } else {
-    stop("Currently, 'cov' is the only implemented method. ",
-         "Contact the developer if you are interested in another method.")
+    stop("Currently, 'cov' is the only implemented choose_method. ",
+         "Contact the developer if you are interested in another choose_method.")
   }
   denom_name
 }
