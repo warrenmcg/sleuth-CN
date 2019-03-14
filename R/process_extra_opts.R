@@ -16,6 +16,9 @@ process_extra_opts <- function(...) {
   alr_opts <- list()
   choose_opts <- list()
 
+  sleuth_version <- as.character(utils::packageVersion('sleuth'))
+  sleuth_check <- utils::compareVersion(sleuth_version, '0.30.0')
+
   ##########################
   ### sleuth fit options ###
   ##########################
@@ -32,12 +35,19 @@ process_extra_opts <- function(...) {
   }
 
   if ("shrink_fun" %in% names(extra_opts)) {
-    if (!is.function(shrink_fun)) {
-      stop("'shrink_fun' must be a function. Please see ?sleuth::sleuth_fit ",
-           "for more details.")
+    if (sleuth_check != 1) {
+      msg <- paste0("The version of sleuth loaded is '", sleuth_version, "'. ",
+                    "The 'shrink_fun' argument only works with the API of ",
+                    "sleuth in versions > 0.30.0. Ignoring this option...")
+      warning(msg)
+    } else {
+      if (!is.function(shrink_fun)) {
+        stop("'shrink_fun' must be a function. Please see ?sleuth::sleuth_fit ",
+             "for more details.")
+      }
+      fit_opts$shrink_fun <- extra_opts$shrink_fun
     }
-    fit_opts$shrink_fun <- extra_opts$shrink_fun
-  } else {
+  } else if (sleuth_check == 1) {
     fit_opts$shrink_fun <- sleuth::basic_shrink_fun
   }
 

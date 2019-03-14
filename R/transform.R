@@ -46,6 +46,17 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
          "for the 'ALR' type.")
   }
 
+  sleuth_version <- as.character(utils::packageVersion('sleuth'))
+  sleuth_check <- utils::compareVersion(sleuth_version, '0.30.0')
+  if (lr_method == 'both' && sleuth_check != 1) {
+    msg <- paste0("The version of sleuth loaded is '", sleuth_version, "'. ",
+                  "The lr_method 'both' only works with the API of sleuth ",
+                  "in versions > 0.30.0. Setting the 'lr_method' to ",
+                  "'transform'...")
+    warning(msg)
+    lr_method <- 'transform'
+  }
+
   transform_func <- retrieve_transform_func(lr_method = lr_method,
                                             denom = denom_name,
                                             delta = delta,
