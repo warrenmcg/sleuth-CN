@@ -1,6 +1,6 @@
 
 ---
-title. "Introduction to Compositional Normalization with sleuth-ALR"
+title: "Introduction to Compositional Normalization with sleuth-ALR"
 author: "Warren A. McGee"
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 abstract: >
@@ -19,10 +19,9 @@ abstract: >
   produced by kallisto or Salmon).
   sleuthALR package version: `r packageVersion("sleuthALR")`
 output:
-  rmarkdown::html_vignette
-  highlight: pygments
-  toc: true
-  fig_width: 5
+  rmarkdown::html_vignette:
+    toc: true
+    fig_width: 5
 bibliography: library.bib
 vignette: >
   %\VignetteIndexEntry{Introduction to Compositional Normalization with sleuth-ALR}
@@ -94,8 +93,9 @@ Once the package is installed, we load the relevant data that we will need for t
 data(denom, package = "yeastStarvationData")
 data(yeastAnnos, package = "yeastStarvationData")
 data(yeastS2C, package = "yeastStarvationData")
-yeastS2C$path <- system.file("extdata", package = "yeastStarvationData",
-                             mustWork = TRUE)
+sys_path <- system.file("extdata", package = "yeastStarvationData",
+                        mustWork = TRUE)
+yeastS2C$path <- file.path(sys_path, yeastS2C$accession)
 ```
 
 `denom` is a character vector containing the transcript that had the most consistent estimate of copy numbers per cell
@@ -123,11 +123,11 @@ method changes the default weighting function so that normalized values are tran
 guaranteed to be greater than or equal to zero.
 
 To run a basic sleuth-ALR analysis, run the following code:
-```{r basicPipeline}
+```{r basicPipeline, message = FALSE}
 alr_so <- make_lr_sleuth_object(sample_to_covariates = yeastS2C,
-  target_mapping = yeastAnnos, aggregation_column = 'gene_id',
+  target_mapping = yeastAnnos, beta = 'conditionnoN',
   full_model = ~condition, null_model = ~1,
-  beta = "conditionnoN", denom_name = denom
+  denom_name = denom, run_models = TRUE
 )
 wt_res <- sleuth_alr_results(obj = alr_so, test = "conditionnoN")
 lrt_res <- sleuth_alr_results(obj = alr_so, test = "reduced:full",
