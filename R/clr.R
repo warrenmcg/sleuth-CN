@@ -38,6 +38,19 @@ calculate_clr <- function(mat, base = "e") {
 #' @param mat N x M matrix of estimated abundances
 #' @param base what should the base of the logarithm be?
 #'   currently only supports base "e" and base 2.
+#' @param remove_zeros boolean to see if this function
+#'   should remove essential zeros (features with zeros in
+#'   all samples). The default is \code{FALSE} to be
+#'   compatible with sleuth, as its default filter removes
+#'   essential zeros.
+#' @param method which method to use for imputing zeros.
+#'   'multiplicative' (default) sets all values smaller than
+#'   a imputation value 'delta' (determined by delta or
+#'   impute_proportion) to that imputation value, and reduces
+#'   all other values by the amount X * (1 - delta*num_zero_values /
+#'   sum_constraint). 'additive' is similar to most other tools, and
+#'   just adds the imputation value to all entries ('delta' must
+#'   be specified)
 #' @param delta a number that is the imputed value. If \code{NULL},
 #'  delta = impute_proportion * (minimum value in sample)
 #' @param impute_proportion percentage of minimum value that
@@ -54,9 +67,9 @@ calculate_clr <- function(mat, base = "e") {
 #' x_1, x_2, ..., x_D => log(x_1 / g(X)), ..., log(x_D / g(X))
 #'
 #' @export
-clr_transformation <- function(mat, base = "e",
-                               remove_zeros = FALSE, delta = NULL,
-                               impute_proportion = 0.65) {
+clr_transformation <- function(mat, base = "e", remove_zeros = FALSE,
+                               method = "multiplicative",
+                               delta = NULL, impute_proportion = 0.65) {
   # this function expects samples to be columns
   # and target IDs to be rows;
   # some of sleuth's internals call the
@@ -72,7 +85,7 @@ clr_transformation <- function(mat, base = "e",
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_zeros(mat, delta = delta,
+  imputed_mat <- impute_zeros(mat, method = method, delta = delta,
                               impute_proportion = 0.65)
   clr_table <- calculate_clr(imputed_mat, base = base)
   if (flip) clr_table <- t(clr_table)

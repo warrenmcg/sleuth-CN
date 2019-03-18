@@ -80,6 +80,7 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL) {
 #'   values, with n equal to the number of denominator values
 #'   and z are the number of rows with essential zeros.
 #'
+#' @importFrom methods is
 #' @export
 alr_transformation <- function(mat, denom_name,
                                base = "e", remove_zeros = FALSE,
@@ -99,7 +100,7 @@ alr_transformation <- function(mat, denom_name,
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_zeros(mat, delta = delta,
+  imputed_mat <- impute_zeros(mat, method = method, delta = delta,
                               impute_proportion = impute_proportion)
   denom_index <- ifelse(is.character(denom_name),
     denom_index <- which(rownames(imputed_mat) %in% denom_name),
