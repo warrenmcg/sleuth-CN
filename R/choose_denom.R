@@ -34,6 +34,12 @@
 #' @return a character vector with one or more denominators for use. If multiple
 #'   features have ties for the metric of choice, currently all of them are returned so
 #'   that their geometric mean can be used as the denominator.
+#' @importFrom data.table as.data.table
+#' @importFrom dplyr select_
+#' @importFrom methods is
+#' @importFrom sleuth sleuth_prep sleuth_to_matrix
+#' @importFrom stats formula
+#' @importFrom matrixStats rowAnys rowSds
 #' @export
 choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
                          aggregation_column = NULL, gene_mode = FALSE, num_cores = 1,
@@ -59,7 +65,7 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
                                                   norm_fun_counts = norm_identity,
                                                   norm_fun_tpm = norm_identity,
                                                   max_bootstrap = 2, num_cores = 1,
-                                                  full_model = formula("~1")))
+                                                  full_model = stats::formula("~1")))
     } else {
       obj <- suppressMessages(sleuth::sleuth_prep(sample_info,
                                                   target_mapping = target_mapping,
@@ -92,7 +98,7 @@ choose_denom <- function(obj = NULL, sample_info = NULL, target_mapping = NULL,
       length_bool <- transcript_lengths[, list(bool = all(length >= 300)), by = list(eval(parse(text = aggregation_column)))]
       length_bool_ids <- length_bool[[aggregation_column]][length_bool$bool]
     } else {
-      transcript_lengths <- dplyr::select(target_mapping, target_id, length)
+      transcript_lengths <- dplyr::select_(target_mapping, "target_id", "length")
       length_bool <- transcript_lengths$length >= 300
       length_bool_ids <- transcript_lengths$target_id[length_bool]
     }

@@ -93,7 +93,7 @@ deseq_size_factors <- function(x, denoms = NULL) {
 #' @return The name of the denominator(s) for the sleuth object
 #' @export
 get_denom_names <- function(obj) {
-  stopifnot(is(obj, "sleuth"))
+  stopifnot(methods::is(obj, "sleuth"))
   name <- environment(obj$norm_fun_counts)$denom_name
   if (is.null(name)) {
     name <- environment(obj$transform_fun_counts)$denom_name
@@ -113,7 +113,7 @@ get_denom_names <- function(obj) {
 # It is exponentiating the mean observations using the inverse of the logarithm
 # used for the original transformation
 get_alr_weight <- function(obj) {
-  stopifnot(is(obj, "sleuth"))
+  stopifnot(methods::is(obj, "sleuth"))
   base <- environment(obj$transform_fun)$base
   base <- as.character(base)
   if (base == "e")
@@ -127,7 +127,7 @@ get_alr_weight <- function(obj) {
 # from the processed data to prevent the denominator from affecting the modeling
 # steps
 clean_denom_names <- function(obj, lr_method) {
-  stopifnot(is(obj, 'sleuth'))
+  stopifnot(methods::is(obj, 'sleuth'))
   denom_names <- get_denom_names(obj)
   len <- length(denom_names)
   if (len > 1 || (is.null(denom_names) || denom_names %in% c("all", "iqlr"))) {
@@ -164,7 +164,7 @@ clean_denom_names <- function(obj, lr_method) {
 # function copied from sleuth to get a test. This is used for 'sleuth_alr_results'.
 get_alr_test <- function (obj, label, type, model)
 {
-    stopifnot(is(obj, "sleuth"))
+    stopifnot(methods::is(obj, "sleuth"))
     stopifnot(type %in% c("lrt", "wt"))
     res <- NULL
     if (type == "lrt") {

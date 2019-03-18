@@ -1,8 +1,27 @@
+#' Find IQLR Denominators
+#'
+#' This function identifies which features in a matrix 
+#' are suitable set to use as a denominator for the
+#' 'Interquartile Logratio' (IQLR) transformation.
+#' These are the features that have variance in the
+#' interquartile range after transforming the data using
+#' the centered logratio (CLR) transformation.
+#' This was originally introduced in ALDEx2 in its paper.
+#' 
+#' @param mat a D x M matrix, with D features and M samples
+#' @param base either "e" (for natural log scale) or "2" for base-2 logarithm
+#'
+#' @return a numeric vector containing the indices of the features that
+#'   form the set to be used as the denominator for the IQLR transformation
+#'
+#' @references For the ALDEx2 paper discusing the IQLR transformation, see
+#'   \url{https://dx.doi.org/10.1186\%2F2049-2618-2-15}
+#' @importFrom stats quantile
 #' @export
 find_iqlr_denoms <- function(mat, base = "e") {
   clr_vals <- calculate_clr(mat, base)
   clr_var <- matrixStats::rowVars(clr_vals)
-  qts <- quantile(clr_var, na.rm = T)
+  qts <- stats::quantile(clr_var, na.rm = T)
   indices <- which(clr_var > qts[2] & clr_var < qts[4])
   indices
 }

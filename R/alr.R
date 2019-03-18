@@ -100,7 +100,6 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL, denom_method = "g
 #'   values, with n equal to the number of denominator values
 #'   and z are the number of rows with essential zeros.
 #'
-#' @importFrom methods is
 #' @export
 alr_transformation <- function(mat, denom_name,
                                base = "e", remove_zeros = FALSE,
@@ -108,8 +107,8 @@ alr_transformation <- function(mat, denom_name,
                                impute_method = "multiplicative",
                                delta = NULL,
                                impute_proportion = 0.65) {
-  stopifnot(is(mat, "matrix"))
-  stopifnot(is(mat[,1], "numeric"))
+  stopifnot(methods::is(mat, "matrix"))
+  stopifnot(methods::is(mat[,1], "numeric"))
 
   flip <- FALSE
   if (ncol(mat) > nrow(mat)) {

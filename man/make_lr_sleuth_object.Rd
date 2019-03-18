@@ -37,7 +37,7 @@ If \code{NULL} (the default), this step is skipped.}
 If \code{FALSE}, the default, only sleuth_prep is done.}
 
 \item{...}{extra options that will tweak the analysis, specifically for
-\link{\code{get_lr_functions}}, \code{sleuth_prep}, and \code{sleuth_fit}.
+\code{\link{get_lr_functions}}, \code{sleuth_prep}, and \code{sleuth_fit}.
 for details on which options can be specified for \code{sleuth_prep} and
 \code{sleuth_fit}, please see ?get_lr_functions, ?sleuth::sleuth_prep or
 ?sleuth::sleuth_fit for details. Note that for \code{sleuth_prep},

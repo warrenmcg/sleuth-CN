@@ -3,6 +3,8 @@
 #' This internal function processes all of the extra arguments for various
 #' steps of the sleuth-ALR pipeline.
 #' 
+#' @param ... extra arguments passed from \code{\link{make_lr_sleuth_object}}
+#'
 #' @details Four sets of arguments will be processed: sleuth_prep (prep_opts),
 #'   sleuth_fit (fit_opts), get_lr_functions (alr_opts), and choose_denom
 #'   (choose_opts). See the documentation for those functions if you want a
@@ -41,7 +43,7 @@ process_extra_opts <- function(...) {
                     "sleuth in versions > 0.30.0. Ignoring this option...")
       warning(msg)
     } else {
-      if (!is.function(shrink_fun)) {
+      if (!is.function(extra_opts$shrink_fun)) {
         stop("'shrink_fun' must be a function. Please see ?sleuth::sleuth_fit ",
              "for more details.")
       }
@@ -237,7 +239,7 @@ process_extra_opts <- function(...) {
   }
 
   if ("target_mapping" %in% names(extra_opts)) {
-    stopifnot(is(extra_opts$target_mapping, "data.frame"))
+    stopifnot(methods::is(extra_opts$target_mapping, "data.frame"))
     prep_opts$target_mapping <- extra_opts$target_mapping
     extra_opts$target_mapping <- NULL
   } else {

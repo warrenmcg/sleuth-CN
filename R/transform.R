@@ -16,6 +16,14 @@
 #'   when more than one feature is used. "geomean" takes the geometric of all features within a sample
 #'   as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
 #'   mean across all samples
+#' @param impute_method which method to use for imputing zeros.
+#'   'multiplicative' (default) sets all values smaller than
+#'   a imputation value 'delta' (determined by delta or
+#'   impute_proportion) to that imputation value, and reduces
+#'   all other values by the amount X * (1 - delta*num_zero_values /
+#'   sum_constraint). 'additive' is similar to most other tools, and
+#'   just adds the imputation value to all entries ('delta' must
+#'   be specified)
 #' @param delta a number that is the imputed value. If \code{NULL},
 #'  delta = impute_proportion * (minimum value in sample) 
 #' @param impute_proportion percentage of minimum value that
@@ -31,6 +39,7 @@
 #'      'transform_fun_counts' and 'transform_fun_tpm' options in sleuth}
 #'  }
 #' 
+#' @importFrom utils packageVersion compareVersion
 #' @export
 get_lr_functions <- function(type = "alr", denom_name = NULL,
                              lr_method = "both",
@@ -67,7 +76,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
                                             denom = denom_name,
                                             delta = delta,
                                             denom_method = denom_method,
-                                            impute = impute_proportion,
+                                            impute_proportion = impute_proportion,
                                             impute_method = impute_method,
                                             base = base)
   if (lr_method == "both") {
@@ -76,7 +85,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
     norm_func <- retrieve_norm_func(type = type, denom = denom_name,
                                     delta = delta,
                                     denom_method = denom_method,
-                                    impute = impute_proportion,
+                                    impute_proportion = impute_proportion,
                                     impute_method = impute_method,
                                     base = base)
   } else {

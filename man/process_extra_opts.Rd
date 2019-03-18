@@ -6,6 +6,9 @@
 \usage{
 process_extra_opts(...)
 }
+\arguments{
+\item{...}{extra arguments passed from \code{\link{make_lr_sleuth_object}}}
+}
 \description{
 This internal function processes all of the extra arguments for various
 steps of the sleuth-ALR pipeline.

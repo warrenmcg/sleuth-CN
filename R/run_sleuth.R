@@ -27,7 +27,7 @@
 #' @param run_models boolean to see if the modeling step should be done.
 #'   If \code{FALSE}, the default, only sleuth_prep is done.
 #' @param ... extra options that will tweak the analysis, specifically for
-#'  \link{\code{get_lr_functions}}, \code{sleuth_prep}, and \code{sleuth_fit}.
+#'  \code{\link{get_lr_functions}}, \code{sleuth_prep}, and \code{sleuth_fit}.
 #'  for details on which options can be specified for \code{sleuth_prep} and
 #'  \code{sleuth_fit}, please see ?get_lr_functions, ?sleuth::sleuth_prep or
 #'  ?sleuth::sleuth_fit for details. Note that for \code{sleuth_prep},
@@ -39,6 +39,8 @@
 #'   (if specified). It will also run the Wald test (if \code{beta} is
 #'   specified) and the LR test (if applicable).
 #'
+#' @importFrom sleuth sleuth_prep sleuth_fit sleuth_wt sleuth_lrt
+#' @importFrom stats model.matrix
 #' @export
 make_lr_sleuth_object <- function(sample_to_covariates, denom_name,
                                   lr_type = "alr", full_model = NULL,
@@ -177,6 +179,8 @@ make_lr_sleuth_object <- function(sample_to_covariates, denom_name,
 #'
 #' @return a \code{data.frame} with the same specification as found in \code{sleuth_results}. See \code{sleuth_results} for
 #'   details.
+#' @importFrom methods is
+#' @importFrom sleuth sleuth_results
 #' @export
 sleuth_alr_results <- function(obj, test, test_type = "wt", which_model = "full",
                                show_all = TRUE, pval_aggregate = obj$pval_aggregate,
@@ -204,7 +208,8 @@ sleuth_alr_results <- function(obj, test, test_type = "wt", which_model = "full"
     }
   }
 
-  sleuth_results(obj, test = test, test_type = test_type, which_model = which_model,
-                 show_all = show_all, pval_aggregate = pval_aggregate,
-                 weight_func = weight_func)
+  sleuth::sleuth_results(obj, test = test, test_type = test_type,
+                         which_model = which_model, show_all = show_all,
+                         pval_aggregate = pval_aggregate,
+                         weight_func = weight_func)
 }

@@ -26,6 +26,15 @@ when more than one feature is used. "geomean" takes the geometric of all feature
 as the size factor, and "DESeq2" takes the median ratio of a feature to its geometric
 mean across all samples}
 
+\item{impute_method}{which method to use for imputing zeros.
+'multiplicative' (default) sets all values smaller than
+a imputation value 'delta' (determined by delta or
+impute_proportion) to that imputation value, and reduces
+all other values by the amount X * (1 - delta*num_zero_values /
+sum_constraint). 'additive' is similar to most other tools, and
+just adds the imputation value to all entries ('delta' must
+be specified)}
+
 \item{delta}{a number that is the imputed value. If \code{NULL},
 delta = impute_proportion * (minimum value in sample)}
 
