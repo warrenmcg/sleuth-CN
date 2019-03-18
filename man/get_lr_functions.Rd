@@ -17,7 +17,8 @@ you can also input a numeric vector of row numbers instead.
 Note that this will be ignored if 'clr' or 'iqlr' is used.}
 
 \item{lr_method}{the choice of how to conduct compositional normalization.
-"both" provides a compositional normalization and compositional transformation functions;
+"both" provides a compositional normalization function and a compositional
+transformation functions;
 "transform" provides a compositional transformation function that also does the normalization}
 
 \item{denom_method}{the choice of what kind of compositional normalization to do
@@ -35,8 +36,13 @@ becomes the imputed value. Only used if delta is \code{NULL}}
 "e" or "2" (can also specify the number 2).}
 }
 \value{
-a transformation function ready to be used for the
- 'transform_fun' option in 'sleuth_prep'
+a list with two items:
+ \itemize{
+   \item{n_func}{the normalization function to be used with the
+     'norm_fun_counts' and 'norm_fun_tpm' options in sleuth}
+   \item{t_func}{the transformation function to be used with the
+     'transform_fun_counts' and 'transform_fun_tpm' options in sleuth}
+ }
 }
 \description{
 This helps you create a function that can be input as a

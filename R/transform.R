@@ -9,7 +9,8 @@
 #'  you can also input a numeric vector of row numbers instead.
 #'  Note that this will be ignored if 'clr' or 'iqlr' is used.
 #' @param lr_method the choice of how to conduct compositional normalization.
-#'   "both" provides a compositional normalization and compositional transformation functions;
+#'   "both" provides a compositional normalization function and a compositional
+#'   transformation functions;
 #'   "transform" provides a compositional transformation function that also does the normalization
 #' @param denom_method the choice of what kind of compositional normalization to do
 #'   when more than one feature is used. "geomean" takes the geometric of all features within a sample
@@ -22,8 +23,13 @@
 #' @param base the base used for the logarithm. Currently only supports
 #'  "e" or "2" (can also specify the number 2).
 #'
-#' @return a transformation function ready to be used for the
-#'  'transform_fun' option in 'sleuth_prep'
+#' @return a list with two items:
+#'  \itemize{
+#'    \item{n_func}{the normalization function to be used with the
+#'      'norm_fun_counts' and 'norm_fun_tpm' options in sleuth}
+#'    \item{t_func}{the transformation function to be used with the
+#'      'transform_fun_counts' and 'transform_fun_tpm' options in sleuth}
+#'  }
 #' 
 #' @export
 get_lr_functions <- function(type = "alr", denom_name = NULL,
@@ -79,13 +85,13 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
     norm_func <- norm_identity
   }
 
-  return(list(norm_func = norm_func, transform_func = transform_func))
+  return(list(n_func = norm_func, t_func = transform_func))
 }
 
 retrieve_transform_func <- function(type = "alr", lr_method = "both",
                                     denom = NULL, delta = 0.01,
                                     denom_method = "geomean",
-                                    impute = 0.65,
+                                    impute_proportion = 0.65,
                                     impute_method = "multiplicative",
                                     base = "e")
 {
@@ -131,8 +137,8 @@ retrieve_transform_func <- function(type = "alr", lr_method = "both",
       logfunc <- switch(base, "e" = log, "2" = log2)
       mat <- suppressWarnings(
         impute_zeros(mat, delta = delta,
-                     impute_proportion = impute,
-                     method = method)
+                     impute_proportion = impute_proportion,
+                     method = impute_method)
       )
 
       if (length(sf) == 1) {
@@ -151,7 +157,7 @@ retrieve_transform_func <- function(type = "alr", lr_method = "both",
   transform_func <- function(mat, sf) { e$fun(mat, sf = sf) }
   environment(transform_func) <- e
 
-  return(transform_fun)
+  return(transform_func)
 }
 
 

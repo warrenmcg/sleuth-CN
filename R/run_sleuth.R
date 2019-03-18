@@ -107,7 +107,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, denom_name,
   # this line of code makes sure that, if a single feature is used as a
   # denominator, it is disqualified from the fitting steps, since it
   # is no longer dependent.
-  sleuth.obj <- clean_denom_names(sleuth.obj, lr_method = lr_method)
+  sleuth.obj <- clean_denom_names(sleuth.obj, lr_method = alr_opts$lr_method)
 
   # the default of sleuth_fit is to fit the 'full' model,
   # found in the 'full_model' variable above
