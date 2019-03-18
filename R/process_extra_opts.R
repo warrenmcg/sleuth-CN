@@ -248,7 +248,7 @@ process_extra_opts <- function(...) {
     agg_col <- extra_opts$aggregation_column
     if (is.null(prep_opts$target_mapping)) {
       stop("'target_mapping' is required if 'aggregation_column' is specified.")
-    } else if (!agg_col %in% colnames(target_mapping)) {
+    } else if (!agg_col %in% colnames(prep_opts$target_mapping)) {
       stop("'", agg_col, "' was not found in the column names for ",
            "'target_mapping'")
     }
