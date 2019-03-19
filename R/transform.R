@@ -63,7 +63,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
     lr_method <- 'transform'
   }
 
-  transform_func <- retrieve_transform_func(lr_method = lr_method,
+  transform_func <- retrieve_transform_func(type = type, lr_method = lr_method,
                                             denom = denom_name,
                                             delta = delta,
                                             denom_method = denom_method,
@@ -73,7 +73,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
   if (lr_method == "both") {
     message(">> ", Sys.time(), " - preparing sleuth object using the ",
             "sequential normalize and transform approach")
-    norm_func <- retrieve_norm_func(denom = denom_name,
+    norm_func <- retrieve_norm_func(type = type, denom = denom_name,
                                     delta = delta,
                                     denom_method = denom_method,
                                     impute = impute_proportion,
