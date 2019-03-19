@@ -73,7 +73,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
   }
 
   transform_func <- retrieve_transform_func(type = type, lr_method = lr_method,
-                                            denom = denom_name,
+                                            denom_name= denom_name,
                                             delta = delta,
                                             denom_method = denom_method,
                                             impute_proportion = impute_proportion,
@@ -82,7 +82,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
   if (lr_method == "both") {
     message(">> ", Sys.time(), " - preparing sleuth object using the ",
             "sequential normalize and transform approach")
-    norm_func <- retrieve_norm_func(type = type, denom = denom_name,
+    norm_func <- retrieve_norm_func(type = type, denom_name= denom_name,
                                     delta = delta,
                                     denom_method = denom_method,
                                     impute_proportion = impute_proportion,
@@ -98,7 +98,7 @@ get_lr_functions <- function(type = "alr", denom_name = NULL,
 }
 
 retrieve_transform_func <- function(type = "alr", lr_method = "both",
-                                    denom = NULL, delta = 0.01,
+                                    denom_name= NULL, delta = 0.01,
                                     denom_method = "geomean",
                                     impute_proportion = 0.65,
                                     impute_method = "multiplicative",
@@ -113,31 +113,37 @@ retrieve_transform_func <- function(type = "alr", lr_method = "both",
   if (lr_method == "transform") {
     e$denom_method <- denom_method
     if (type == "alr") {
-      e$denom <- denom
-      e$fun <- function(matrix, sf = 1, denom_name = eval(e$denom)) {
-        alr_transformation(matrix, denom_name = denom_name,
-                           base = e$base, delta = e$delta,
-                           denom_method = e$denom_method,
-                           impute_method = e$impute_method,
-                           impute_proportion = e$impute)
+      e$denom_name<- denom_name
+      e$fun <- function(matrix, sf = 1, denom_name = eval(e$denom_name)) {
+        suppressWarnings(
+          alr_transformation(matrix, denom_name = denom_name,
+                             base = e$base, delta = e$delta,
+                             denom_method = e$denom_method,
+                             impute_method = e$impute_method,
+                             impute_proportion = e$impute)
+        )
       }
     } else if (type == "iqlr") {
-      e$denom <- "iqlr"
+      e$denom_name<- "iqlr"
       e$fun <- function(matrix, sf = 1) {
-        iqlr_transformation(matrix,
-                            base = e$base, delta = e$delta,
-                            denom_method = e$denom_method,
-                            impute_method = e$impute_method,
-                            impute_proportion = e$impute)
+        suppressWarnings(
+          iqlr_transformation(matrix,
+                              base = e$base, delta = e$delta,
+                              denom_method = e$denom_method,
+                              impute_method = e$impute_method,
+                              impute_proportion = e$impute)
+        )
       }
     } else {
-      e$denom <- "all"
+      e$denom_name<- "all"
       e$fun <- function(matrix, sf = 1) {
-        clr_transformation(matrix,
-                           base = e$base, delta = e$delta,
-                           denom_method = e$denom_method,
-                           impute_method = e$impute_method,
-                           impute_proportion = e$impute)
+        suppressWarnings(
+          clr_transformation(matrix,
+                             base = e$base, delta = e$delta,
+                             denom_method = e$denom_method,
+                             impute_method = e$impute_method,
+                             impute_proportion = e$impute)
+        )
       }
     }
   } else if (lr_method == "both") {
@@ -170,7 +176,7 @@ retrieve_transform_func <- function(type = "alr", lr_method = "both",
 }
 
 
-retrieve_norm_func <- function(type = "alr", denom = NULL,
+retrieve_norm_func <- function(type = "alr", denom_name= NULL,
                                impute_method = "multiplicative",
                                denom_method = "geomean",
                                delta = NULL, impute_proportion = 0.65,
@@ -178,10 +184,10 @@ retrieve_norm_func <- function(type = "alr", denom = NULL,
 {
   n <- new.env()
   if (type != "alr") {
-    denom <- NULL
+    denom_name<- NULL
   }
 
-  n$denom_name <- denom
+  n$denom_name <- denom_name
   n$type <- type
   n$method <- denom_method
   n$fun <- function(mat, denoms = n$denom_name, type = n$type, method = n$method) {
