@@ -51,15 +51,19 @@ make_lr_sleuth_object <- function(sample_to_covariates, denom_name,
   alr_opts <- opts_list$alr_opts
   choose_opts <- opts_list$choose_opts
 
-  if (run_models && !is.null(extra_opts$beta)) {
+  if (run_models && !is.null(beta)) {
     test_design <- model.matrix(full_model, data = sample_to_covariates)
     if (!beta %in% colnames(test_design)) {
+      betas <- colnames(test_design)
+      if ("(Intercept)" %in% betas) {
+        betas <- betas[-which(betas == "(Intercept)")]
+      }
       stop("It does not seem that the specified 'beta' is found among the ",
            "possible betas for your specified 'sample_to_covariates' and ",
-           "'full_model'. Here are the possible betas: ",
-           paste(colnames(test_design), collapse = ", "))
+           "'test'. Here are the possible betas: ",
+           paste0("'", paste(betas, collapse = ", "), "'"))
     }
-  } else if (run_models && !is.null(full_model)) {
+  } else if (run_models && is.null(full_model)) {
     stop("If 'run_models' is TRUE, then 'full_model' must be specified")
   }
 
@@ -129,6 +133,7 @@ make_lr_sleuth_object <- function(sample_to_covariates, denom_name,
               "performing likelihood ratio test")
       null_opts <- list(formula = null_model, fit_name = "reduced")
       fit_opts <- c(fit_opts, null_opts)
+      fit_opts$obj <- sleuth.obj
       sleuth.obj <- do.call(sleuth::sleuth_fit, fit_opts)
       sleuth.obj <- sleuth::sleuth_lrt(sleuth.obj, "reduced", "full")
     } else {
