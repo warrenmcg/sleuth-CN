@@ -104,7 +104,7 @@ retrieve_transform_func <- function(type = "alr", lr_method = "both",
   if (lr_method == "transform") {
     e$denom_method <- denom_method
     if (type == "alr") {
-      e$denom <- denom_name
+      e$denom <- denom
       e$fun <- function(matrix, sf = 1, denom_name = eval(e$denom)) {
         alr_transformation(matrix, denom_name = denom_name,
                            base = e$base, delta = e$delta,
@@ -161,7 +161,7 @@ retrieve_transform_func <- function(type = "alr", lr_method = "both",
 }
 
 
-retrieve_norm_func <- function(type = "alr", denom_name = NULL,
+retrieve_norm_func <- function(type = "alr", denom = NULL,
                                impute_method = "multiplicative",
                                denom_method = "geomean",
                                delta = NULL, impute_proportion = 0.65,
@@ -169,10 +169,10 @@ retrieve_norm_func <- function(type = "alr", denom_name = NULL,
 {
   n <- new.env()
   if (type != "alr") {
-    denom_name <- NULL
+    denom <- NULL
   }
 
-  n$denom_name <- denom_name
+  n$denom_name <- denom
   n$type <- type
   n$method <- denom_method
   n$fun <- function(mat, denoms = n$denom_name, type = n$type, method = n$method) {
