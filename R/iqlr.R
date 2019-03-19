@@ -30,7 +30,12 @@ find_iqlr_denoms <- function(mat, base = "e") {
 #'   all samples). The default is \code{FALSE} to be
 #'   compatible with sleuth, as its default filter removes
 #'   essential zeros.
-#' @param method which method to use for imputing zeros.
+#' @param denom_method either 'geomean' or 'DESeq2' to
+#'   use either the geometric mean of the IQLR features as the
+#'   denominator, or the DESeq2-style size factors (focused on the median
+#'   among the IQLR features) as the denominator. The IQLR features
+#'   are selected using \code{\link{find_iqlr_denoms}}.
+#' @param impute_method which method to use for imputing zeros.
 #'   'multiplicative' (default) sets all values smaller than
 #'   a imputation value 'delta' (determined by delta or
 #'   impute_proportion) to that imputation value, and reduces
@@ -49,7 +54,8 @@ find_iqlr_denoms <- function(mat, base = "e") {
 #'
 #' @export
 iqlr_transformation <- function(mat, base = "e", remove_zeros = FALSE,
-                                method = "multiplicative",
+                                denom_method = "geomean",
+                                impute_method = "multiplicative",
                                 delta = NULL, impute_proportion = 0.65) {
   flip <- FALSE
   if (ncol(mat) > nrow(mat)) {
@@ -61,10 +67,10 @@ iqlr_transformation <- function(mat, base = "e", remove_zeros = FALSE,
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_zeros(mat, method = method, delta = delta,
+  imputed_mat <- impute_zeros(mat, method = impute_method, delta = delta,
                               impute_proportion = impute_proportion)
   denom_index <- find_iqlr_denoms(imputed_mat, base)
-  iqlr_table <- calculate_alr(imputed_mat, base, denom_index)
+  iqlr_table <- calculate_alr(imputed_mat, base, denom_index, denom_method)
   if (flip) iqlr_table <- t(iqlr_table)
   iqlr_table
 }

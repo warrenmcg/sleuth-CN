@@ -12,9 +12,16 @@
 #'   more than one, the geometric mean of the 
 #'   denominator values within one sample is used
 #'   as the denominator.
+#' @param denom_method either 'geomean' or 'DESeq2' to
+#'   use either the geometric mean of the features as the
+#'   denominator, or the DESeq2-style size factors
+#'   as the denominator. If there is only one feature,
+#'   'geomean' uses the feature's value itself, whereas
+#'   'DESeq2' will use the ratio of the feature to 
+#'   the geometric mean across samples.
 #' 
 #' @return D x M matrix of ALR-transformed values
-calculate_alr <- function(mat, base = "e", denom_index = NULL) {
+calculate_alr <- function(mat, base = "e", denom_index = NULL, denom_method = "geomean") {
   if(is.character(denom_index) & !(all(denom_index %in% rownames(mat))))
     stop(denom_index, " is not one of the row names of your matrix.")
   else if (!(all(denom_index %in% c(1:nrow(mat)))))
@@ -22,16 +29,22 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL) {
 
   base <- as.character(base)
   base <- match.arg(base, c("e", "2"))
+  denom_method <- match.arg(denom_method, c("geomean", "DESeq2"))
 
   if (any(mat == 0)) {
     stop("The ALR transformation cannot be done because there is ",
          "at least one zero value in the supplied matrix.")
   }
 
-  if (length(denom_index) > 1) {
-    denom_values <- mat[denom_index, ]
-    denom_row <- apply(denom_values, 2, geomean)
-  } else denom_row <- mat[denom_index, ]
+  if (denom_method == "geomean") {
+    if (length(denom_index) > 1) {
+      denom_values <- mat[denom_index, ]
+      denom_row <- apply(denom_values, 2, geomean)
+    } else denom_row <- mat[denom_index, ]
+  } else {
+    denom_row <- deseq_size_factors(mat, denoms = denom_index)
+  }
+
   alr_table <- sweep(mat, 2, denom_row, "/")
   if (base == "e") alr_table <- log(alr_table) else
     alr_table <- log(alr_table, as.integer(base))
@@ -63,7 +76,14 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL) {
 #'   all samples). The default is \code{FALSE} to be
 #'   compatible with sleuth, as its default filter removes
 #'   essential zeros.
-#' @param method which method to use for imputing zeros.
+#' @param denom_method either 'geomean' or 'DESeq2' to
+#'   use either the geometric mean of the features as the
+#'   denominator, or the DESeq2-style size factors
+#'   as the denominator. If there is only one feature,
+#'   'geomean' uses the feature's value itself, whereas
+#'   'DESeq2' will use the ratio of the feature to 
+#'   the geometric mean across samples.
+#' @param impute_method which method to use for imputing zeros.
 #'   'multiplicative' (default) sets all values smaller than
 #'   a imputation value 'delta' (determined by delta or
 #'   impute_proportion) to that imputation value, and reduces
@@ -84,7 +104,8 @@ calculate_alr <- function(mat, base = "e", denom_index = NULL) {
 #' @export
 alr_transformation <- function(mat, denom_name,
                                base = "e", remove_zeros = FALSE,
-                               method = "multiplicative",
+                               denom_method = "geomean",
+                               impute_method = "multiplicative",
                                delta = NULL,
                                impute_proportion = 0.65) {
   stopifnot(is(mat, "matrix"))
@@ -100,13 +121,13 @@ alr_transformation <- function(mat, denom_name,
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_zeros(mat, method = method, delta = delta,
+  imputed_mat <- impute_zeros(mat, method = impute_method, delta = delta,
                               impute_proportion = impute_proportion)
   denom_index <- ifelse(is.character(denom_name),
     denom_index <- which(rownames(imputed_mat) %in% denom_name),
     denom_index <- denom_name
   )
-  alr_table <- calculate_alr(imputed_mat, base, denom_index)
+  alr_table <- calculate_alr(imputed_mat, base, denom_index, denom_method)
   if (flip) alr_table <- t(alr_table)
   alr_table
 }

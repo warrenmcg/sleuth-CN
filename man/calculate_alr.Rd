@@ -4,7 +4,8 @@
 \alias{calculate_alr}
 \title{Calculate ALR}
 \usage{
-calculate_alr(mat, base = "e", denom_index = NULL)
+calculate_alr(mat, base = "e", denom_index = NULL,
+  denom_method = "geomean")
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
@@ -18,6 +19,14 @@ an integer vector of row numbers. If there is
 more than one, the geometric mean of the 
 denominator values within one sample is used
 as the denominator.}
+
+\item{denom_method}{either 'geomean' or 'DESeq2' to
+use either the geometric mean of the features as the
+denominator, or the DESeq2-style size factors
+as the denominator. If there is only one feature,
+'geomean' uses the feature's value itself, whereas
+'DESeq2' will use the ratio of the feature to 
+the geometric mean across samples.}
 }
 \value{
 D x M matrix of ALR-transformed values

@@ -38,6 +38,50 @@ geomean <- function(x){
   exp(sum(log(x_vals)) / length(x_vals))
 }
 
+#' Get DESeq2 Size Factors
+#'
+#' Function to return the DESeq2-style size factors of a collection of features.
+#' The geometric mean is calculated for feature across samples. Then the
+#' ratio of every sample observation to the geometric mean across samples is
+#' calculated. From there, the median of ratios within each sample is selected
+#' as the size factor.
+#'
+#' @param x a D x M matrix with D features (the denominator features) and
+#'   M samples
+#' @param denoms a vector of either indices or feature names that match row names
+#'   of the matrix. These are the ones that will be used for calculating the
+#'   compositional normalization using the DESeq2-method.
+#'
+#' @return a vector of the size factors for each sample
+#' @references For a discussion of why the DESeq2 size factor is compatible
+#'   with Compositional Normalization, see
+#'   \url{https://dx.doi.org/10.1093/bioinformatics/bty175}
+#' @references For the original DESeq2 method, see
+#'   \link[DESeq2]{estimateSizeFactorsForMatrix}
+#' @importFrom methods is
+#' @importFrom stats median
+#' @export
+deseq_size_factors <- function(x, denoms = NULL) {
+  stopifnot(is(x, "matrix"))
+  if (!is.null(denoms)) {
+    if (is(denoms, "character") && !all(denoms %in% rownames(x))) {
+      missing_rows <- denoms[which(!denoms %in% rownames(x))]
+      formatted_rows <- paste(missing_rows, collapse = "', '")
+      err_msg <- paste0("There were ", length(missing_rows), " features ",
+                        "from the rownames of the supplied matrix. Here are ",
+                        "missing features: '", formatted_rows, "'")
+      stop(err_msg)
+    }
+    x <- x[denoms, , drop = FALSE]
+  }
+  logmeans <- rowMeans(log(x))
+  sf <- apply(x, 2, function(sample) {
+    ratios <- (log(sample) - logmeans)[is.finite(logmeans) & sample > 0]
+    exp(median(ratios))
+  })
+  sf
+}
+
 #' Get Denom Name(s)
 #' 
 #' Function to retrieve the denominator(s) for a sleuth object

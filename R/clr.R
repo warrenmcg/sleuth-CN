@@ -8,11 +8,16 @@
 #'   M samples
 #' @param base what should the base of the logarithm be?
 #'   currently only supports base "e" and base 2.
+#' @param denom_method either 'geomean' or 'DESeq2' to
+#'   use either the geometric mean of all features as the
+#'   denominator, or the DESeq2-style size factors as the denominator
+#'   (equivalent to using standard DESeq2-style normalization, 
+#'   which is used in standard sleuth)
 #'
 #' @return D x M matrix of CLR-transformed values,
 #'   centered on the geometric mean of all features
 #'   within each sample
-calculate_clr <- function(mat, base = "e") {
+calculate_clr <- function(mat, base = "e", denom_method = "geomean") {
   base <- as.character(base)
   base <- match.arg(base, c("e", "2"))
 
@@ -21,9 +26,14 @@ calculate_clr <- function(mat, base = "e") {
          "at least one zero value in the supplied matrix.")
   }
 
-  clr_table <- apply(mat, 2, function(x) {
-    x / geomean(x)
-  })
+  if (denom_method == "geomean") {
+    clr_table <- apply(mat, 2, function(x) {
+      x / geomean(x)
+    })
+  } else {
+    sf <- deseq_size_factors(mat)
+    clr_table <- sweep(mat, 2, sf, "/")
+  }
   if (base == "e") clr_table <- log(clr_table) else
     clr_table <- log(clr_table, as.integer(base))
   clr_table
@@ -43,7 +53,12 @@ calculate_clr <- function(mat, base = "e") {
 #'   all samples). The default is \code{FALSE} to be
 #'   compatible with sleuth, as its default filter removes
 #'   essential zeros.
-#' @param method which method to use for imputing zeros.
+#' @param denom_method either 'geomean' or 'DESeq2' to
+#'   use either the geometric mean of all features as the
+#'   denominator, or the DESeq2-style size factors as the denominator
+#'   (equivalent to using standard DESeq2-style normalization, 
+#'   which is used in standard sleuth)
+#' @param impute_method which method to use for imputing zeros.
 #'   'multiplicative' (default) sets all values smaller than
 #'   a imputation value 'delta' (determined by delta or
 #'   impute_proportion) to that imputation value, and reduces
@@ -68,7 +83,8 @@ calculate_clr <- function(mat, base = "e") {
 #'
 #' @export
 clr_transformation <- function(mat, base = "e", remove_zeros = FALSE,
-                               method = "multiplicative",
+                               denom_method = "geomean",
+                               impute_method = "multiplicative",
                                delta = NULL, impute_proportion = 0.65) {
   # this function expects samples to be columns
   # and target IDs to be rows;
@@ -85,9 +101,10 @@ clr_transformation <- function(mat, base = "e", remove_zeros = FALSE,
     mat <- remove_essential_zeros(mat)
   }
 
-  imputed_mat <- impute_zeros(mat, method = method, delta = delta,
+  imputed_mat <- impute_zeros(mat, method = impute_method, delta = delta,
                               impute_proportion = 0.65)
-  clr_table <- calculate_clr(imputed_mat, base = base)
+  clr_table <- calculate_clr(imputed_mat, base = base,
+                             denom_method = denom_method)
   if (flip) clr_table <- t(clr_table)
   clr_table
 }

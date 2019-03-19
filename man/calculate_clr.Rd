@@ -4,7 +4,7 @@
 \alias{calculate_clr}
 \title{Calculate CLR}
 \usage{
-calculate_clr(mat, base = "e")
+calculate_clr(mat, base = "e", denom_method = "geomean")
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
@@ -12,6 +12,12 @@ M samples}
 
 \item{base}{what should the base of the logarithm be?
 currently only supports base "e" and base 2.}
+
+\item{denom_method}{either 'geomean' or 'DESeq2' to
+use either the geometric mean of all features as the
+denominator, or the DESeq2-style size factors as the denominator
+(equivalent to using standard DESeq2-style normalization, 
+which is used in standard sleuth)}
 }
 \value{
 D x M matrix of CLR-transformed values,

@@ -5,7 +5,8 @@
 \title{Calculate ALR}
 \usage{
 alr_transformation(mat, denom_name, base = "e", remove_zeros = FALSE,
-  method = "multiplicative", delta = NULL, impute_proportion = 0.65)
+  denom_method = "geomean", impute_method = "multiplicative",
+  delta = NULL, impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{an D x M matrix of D target IDs and
@@ -26,7 +27,15 @@ all samples). The default is \code{FALSE} to be
 compatible with sleuth, as its default filter removes
 essential zeros.}
 
-\item{method}{which method to use for imputing zeros.
+\item{denom_method}{either 'geomean' or 'DESeq2' to
+use either the geometric mean of the features as the
+denominator, or the DESeq2-style size factors
+as the denominator. If there is only one feature,
+'geomean' uses the feature's value itself, whereas
+'DESeq2' will use the ratio of the feature to 
+the geometric mean across samples.}
+
+\item{impute_method}{which method to use for imputing zeros.
 'multiplicative' (default) sets all values smaller than
 a imputation value 'delta' (determined by delta or
 impute_proportion) to that imputation value, and reduces

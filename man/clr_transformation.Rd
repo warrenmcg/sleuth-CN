@@ -5,7 +5,8 @@
 \title{Centered Logratio Transformation}
 \usage{
 clr_transformation(mat, base = "e", remove_zeros = FALSE,
-  method = "multiplicative", delta = NULL, impute_proportion = 0.65)
+  denom_method = "geomean", impute_method = "multiplicative",
+  delta = NULL, impute_proportion = 0.65)
 }
 \arguments{
 \item{mat}{N x M matrix of estimated abundances}
@@ -19,7 +20,13 @@ all samples). The default is \code{FALSE} to be
 compatible with sleuth, as its default filter removes
 essential zeros.}
 
-\item{method}{which method to use for imputing zeros.
+\item{denom_method}{either 'geomean' or 'DESeq2' to
+use either the geometric mean of all features as the
+denominator, or the DESeq2-style size factors as the denominator
+(equivalent to using standard DESeq2-style normalization, 
+which is used in standard sleuth)}
+
+\item{impute_method}{which method to use for imputing zeros.
 'multiplicative' (default) sets all values smaller than
 a imputation value 'delta' (determined by delta or
 impute_proportion) to that imputation value, and reduces
