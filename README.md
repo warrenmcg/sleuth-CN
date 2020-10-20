@@ -1,6 +1,6 @@
-# sleuth-ALR
+# sleuth-CN
 
-Preprint coming soon! If you use this tool, any constructive feedback is greatly appreciated.
+Preprint available [here](https://www.biorxiv.org/content/10.1101/564955v1)! If you use this tool, any constructive feedback is greatly appreciated.
 
 ## Compositional Data Analysis approach to Sleuth
 
@@ -10,6 +10,14 @@ Applying the ideas of John Aitchison, as well as the ideas found in
 the R packages `ALDEx2` and `compositions`, this performs a logratio
 transformation of data created by `kallisto` or `salmon` to be 
 analyzed by `sleuth`.
+
+The "CN" stands for **Compositional Normalization**. Note that this approach is 
+different from a formal compositional data analysis approach, which focuses its
+attention purely on the relative abundances. This approach explicitly attempts
+to recover the absolute abundances by anchoring the data on defined
+"negative control" features (spike-ins, reference genes, etc). Even when such
+features are not present in the data, it provides a more accurate interpretation
+of the data (how all other features are changing *relative to* a defined set of features).
 
 See the preprint for full details.
 
